@@ -1,4 +1,4 @@
-@FCAMM.Api_HostAddress = http://localhost:5151
+@FCAMM.Api_HostAddress = http://localhost:5126
 
 GET {{FCAMM.Api_HostAddress}}/weatherforecast/
 Accept: application/json
