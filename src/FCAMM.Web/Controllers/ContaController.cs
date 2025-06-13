@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FCAMM.Web.Controllers;
 
+[Route("conta")]
 public class ContaController : Controller
 {
     private readonly UserManager<UsuarioModel> _userManager;
@@ -26,7 +27,7 @@ public class ContaController : Controller
     }
 
 
-    [HttpGet]
+    [HttpGet("registrar")]
     [AllowAnonymous]
     public IActionResult Registrar(string? returnUrl = null)
     {
@@ -35,7 +36,7 @@ public class ContaController : Controller
         return View();
     }
 
-    [HttpPost]
+    [HttpPost("registrar")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Registrar(RegistrarViewModel model, string? returnUrl = null)
@@ -76,7 +77,7 @@ public class ContaController : Controller
     }
 
 
-[HttpGet]
+[HttpGet("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
@@ -87,7 +88,7 @@ public class ContaController : Controller
         return View();
     }
 
-    [HttpPost]
+    [HttpPost("login")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
@@ -132,7 +133,7 @@ public class ContaController : Controller
     }
 
 
-[HttpPost]
+[HttpPost("logout")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
@@ -142,7 +143,7 @@ public class ContaController : Controller
             return RedirectToAction("Index", "Home");
         }
         
-        [HttpGet]
+        [HttpGet("acesso-negado")]
         public IActionResult AcessoNegado()
         {
             return View();
@@ -172,7 +173,7 @@ public class ContaController : Controller
         }
         
         // GET: /Conta/LoginWith2fa
-        [HttpGet]
+        [HttpGet("login-2fa")]
         [AllowAnonymous]
         public async Task<IActionResult> LoginWith2fa(bool rememberMe, string? returnUrl = null)
         {
@@ -191,7 +192,7 @@ public class ContaController : Controller
         }
 
         // POST: /Conta/LoginWith2fa
-        [HttpPost]
+        [HttpPost("login-2fa")]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LoginWith2fa(LoginWith2faViewModel model, bool rememberMe, string? returnUrl = null)
@@ -231,7 +232,7 @@ public class ContaController : Controller
         }
 
         // GET: /Conta/Lockout
-        [HttpGet]
+        [HttpGet("bloqueado")]
         [AllowAnonymous]
         public IActionResult Lockout()
         {
