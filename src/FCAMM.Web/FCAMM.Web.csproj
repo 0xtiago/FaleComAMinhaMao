@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FCAMM.Blazor\FCAMM.Blazor.csproj" />
     <ProjectReference Include="..\FCAMM.Core\FCAMM.Core.csproj" />
   </ItemGroup>
 
