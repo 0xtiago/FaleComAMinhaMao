@@ -4,21 +4,17 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <div class="text-center mb-4">
-                    <i class="fas fa-hand-paper text-primary fs-1 mb-3"></i>
-                    <h4 class="card-title">Entrar na sua conta</h4>
-                    <p class="text-muted">Bem-vindo de volta ao FCAMM</p>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Entrar na sua conta</h4>
                 </div>
-
-                <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                <div class="card-body">
                     @if (!ViewData.ModelState.IsValid)
                     {
                         <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
                             <strong>Erro ao fazer login:</strong>
                             <ul class="mb-0 mt-2">
                                 @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
@@ -29,96 +25,48 @@
                         </div>
                     }
 
-                    <div class="mb-3">
-                        <label asp-for="Email" class="form-label">Email</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-envelope"></i>
-                            </span>
+                    <form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
                             <input asp-for="Email" type="email" class="form-control" placeholder="Digite seu email" autocomplete="email">
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
-                        <span asp-validation-for="Email" class="text-danger small"></span>
-                    </div>
 
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label">Senha</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="bi bi-lock"></i>
-                            </span>
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Senha</label>
                             <input asp-for="Password" type="password" class="form-control" placeholder="Digite sua senha" autocomplete="current-password">
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('Password')">
-                                <i class="bi bi-eye" id="toggleIcon"></i>
-                            </button>
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
-                        <span asp-validation-for="Password" class="text-danger small"></span>
-                    </div>
 
-                    <div class="mb-3 form-check">
-                        <input asp-for="RememberMe" type="checkbox" class="form-check-input">
-                        <label asp-for="RememberMe" class="form-check-label">
-                            Lembrar-me neste dispositivo
-                        </label>
-                    </div>
+                        <div class="form-check mb-3">
+                            <input asp-for="RememberMe" type="checkbox" class="form-check-input">
+                            <label asp-for="RememberMe" class="form-check-label">
+                                Lembrar-me neste dispositivo
+                            </label>
+                        </div>
 
-                    <div class="d-grid mb-3">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Entrar
-                        </button>
-                    </div>
+                        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                    </form>
+
+                    <hr>
 
                     <div class="text-center">
-                        <a href="#" class="text-decoration-none small">
-                            <i class="bi bi-key me-1"></i>Esqueceu sua senha?
-                        </a>
+                        <p class="mb-2">
+                            <a href="#" class="text-decoration-none">Esqueceu sua senha?</a>
+                        </p>
+                        <p class="mb-0">
+                            Não possui uma conta?
+                            <a asp-action="Registrar" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="text-decoration-none fw-bold">
+                                Registre-se aqui
+                            </a>
+                        </p>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
-
-        <div class="text-center mt-4">
-            <p class="text-muted">
-                Não possui uma conta?
-                <a asp-action="Registrar" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="text-decoration-none fw-bold">
-                    Registre-se aqui
-                </a>
-            </p>
-        </div>
-
-        <div class="text-center mt-3">
-            <small class="text-muted">
-                Ao entrar, você concorda com nossos
-                <a href="#" class="text-decoration-none">Termos de Uso</a> e
-                <a href="#" class="text-decoration-none">Política de Privacidade</a>
-            </small>
         </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
-    <script>
-        // Função para alternar visibilidade da senha
-        function togglePassword(fieldId) {
-            const field = document.getElementById(fieldId);
-            const icon = document.getElementById('toggleIcon');
-
-            if (field.type === 'password') {
-                field.type = 'text';
-                icon.className = 'bi bi-eye-slash';
-            } else {
-                field.type = 'password';
-                icon.className = 'bi bi-eye';
-            }
-        }
-
-        // Focar no primeiro campo ao carregar
-        document.addEventListener('DOMContentLoaded', function() {
-            const emailField = document.getElementById('Email');
-            if (emailField && !emailField.value) {
-                emailField.focus();
-            }
-        });
-    </script>
 }

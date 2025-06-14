@@ -3,51 +3,82 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full text-center">
-        <div class="bg-white shadow-xl rounded-2xl p-8">
-            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6">
-                <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
+<div class="row justify-content-center">
+<div class="col-md-6 col-lg-5">
+    <div class="card shadow-sm">
+        <div class="card-body text-center p-5">
+            <div class="mb-4">
+                <i class="bi bi-shield-exclamation text-warning" style="font-size: 4rem;"></i>
             </div>
 
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">
-                Acesso Negado
-            </h1>
+            <h4 class="card-title text-warning mb-3">Acesso Negado</h4>
 
-            <p class="text-gray-600 mb-8">
+            <p class="text-muted mb-4">
                 Você não tem permissão para acessar este recurso.
                 Isso pode acontecer se você não estiver logado ou não tiver as permissões necessárias.
             </p>
 
-            <div class="space-y-4">
-                <a asp-controller="Conta" asp-action="Login"
-                   class="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                    </svg>
-                    Fazer Login
-                </a>
-
-                <a asp-controller="Home" asp-action="Index"
-                   class="w-full inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                    </svg>
-                    Voltar ao Início
-                </a>
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>O que fazer agora:</strong>
+                <ul class="list-unstyled mt-2 mb-0">
+                    <li><i class="bi bi-check2 me-1"></i> Faça login com sua conta</li>
+                    <li><i class="bi bi-check2 me-1"></i> Verifique se você tem as permissões necessárias</li>
+                    <li><i class="bi bi-check2 me-1"></i> Entre em contato com o suporte se necessário</li>
+                </ul>
             </div>
 
-            <div class="mt-8 pt-6 border-t border-gray-200">
-                <p class="text-sm text-gray-500">
-                    Se você acredita que isto é um erro, entre em contato com o
-                    <a href="#" class="text-red-600 hover:text-red-500 font-medium">suporte técnico</a>.
-                </p>
+            <div class="d-grid gap-2">
+                <a asp-controller="Conta" asp-action="Login" class="btn btn-warning btn-lg"/>
+                <i class="bi bi-box-arrow-in-right me-2"></i>@{
+                                                                 ViewData["Title"] = "Acesso Negado";
+                                                                 Layout = "~/Views/Shared/_Layout.cshtml";
+                                                             }
+
+                <div class="container mt-5">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h1 class="card-title text-warning mb-4">Acesso Negado</h1>
+
+                                    <p class="card-text mb-4">
+                                        Você não tem permissão para acessar este recurso.
+                                        Isso pode acontecer se você não estiver logado ou não tiver as permissões necessárias.
+                                    </p>
+
+                                    <div class="alert alert-warning">
+                                        <h6 class="alert-heading">O que fazer agora:</h6>
+                                        <ul class="mb-0">
+                                            <li>Faça login com sua conta</li>
+                                            <li>Verifique se você tem as permissões necessárias</li>
+                                            <li>Entre em contato com o suporte se necessário</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="d-grid gap-2">
+                                        <a asp-controller="Conta" asp-action="Login" class="btn btn-warning">
+                                            Fazer Login
+                                        </a>
+                                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                                            Voltar ao Início
+                                        </a>
+                                    </div>
+
+                                    <div class="mt-4">
+                                        <small class="text-muted">
+                                            Se você acredita que isto é um erro, entre em contato com o
+                                            <a asp-controller="Home" asp-action="Contact" class="text-decoration-none">suporte técnico</a>.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
             </div>
         </div>
     </div>
 </div>
+</div>
+    

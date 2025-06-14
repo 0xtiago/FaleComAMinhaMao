@@ -1,0 +1,110 @@
+@model FCAMM.Web.ViewModels.Conta.AlterarSenhaViewModel
+@{
+    ViewData["Title"] = "Alterar Senha";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <!-- Sidebar com links -->
+            <div class="list-group">
+                <a asp-action="Perfil" class="list-group-item list-group-item-action">
+                    Editar Perfil
+                </a>
+                <a asp-action="AlterarSenha" class="list-group-item list-group-item-action active">
+                    Alterar Senha
+                </a>
+                <a href="#" class="list-group-item list-group-item-action">
+                    Meus Textos
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Alterar Senha</h4>
+                </div>
+                <div class="card-body">
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <strong>Erro ao alterar senha:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Dicas de Segurança:</h6>
+                        <ul class="mb-0">
+                            <li>Use uma senha com pelo menos 6 caracteres</li>
+                            <li>Combine letras maiúsculas, minúsculas e números</li>
+                            <li>Evite senhas óbvias como datas de nascimento</li>
+                        </ul>
+                    </div>
+
+                    <form asp-action="AlterarSenha" method="post">
+                        <div class="mb-3">
+                            <label asp-for="SenhaAtual" class="form-label">Senha Atual</label>
+                            <input asp-for="SenhaAtual" type="password" class="form-control" placeholder="Digite sua senha atual">
+                            <span asp-validation-for="SenhaAtual" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="NovaSenha" class="form-label">Nova Senha</label>
+                                    <input asp-for="NovaSenha" type="password" class="form-control" placeholder="Digite a nova senha">
+                                    <span asp-validation-for="NovaSenha" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="ConfirmarSenha" class="form-label">Confirmar Nova Senha</label>
+                                    <input asp-for="ConfirmarSenha" type="password" class="form-control" placeholder="Confirme a nova senha">
+                                    <span asp-validation-for="ConfirmarSenha" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                            <a asp-action="Perfil" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Validação em tempo real da confirmação de senha
+        document.addEventListener('DOMContentLoaded', function() {
+            const novaSenha = document.getElementById('NovaSenha');
+            const confirmarSenha = document.getElementById('ConfirmarSenha');
+            
+            function validatePasswords() {
+                if (novaSenha.value !== confirmarSenha.value && confirmarSenha.value.length > 0) {
+                    confirmarSenha.setCustomValidity('As senhas não coincidem');
+                } else {
+                    confirmarSenha.setCustomValidity('');
+                }
+            }
+            
+            if (confirmarSenha && novaSenha) {
+                confirmarSenha.addEventListener('input', validatePasswords);
+                novaSenha.addEventListener('input', validatePasswords);
+            }
+        });
+    </script>
+}

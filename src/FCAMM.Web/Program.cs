@@ -1,5 +1,7 @@
+using FCAMM.Core.Contants;
 using FCAMM.Core.Data;
 using FCAMM.Core.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +19,8 @@ builder.Services.AddDefaultIdentity<UsuarioModel>(options =>
     options.Password.RequireUppercase = true;
     options.Password.RequiredLength = 6;
     options.SignIn.RequireConfirmedAccount = false;
-}).AddEntityFrameworkStores<AppDbContext>();
+}).AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddControllersWithViews();
 
@@ -29,6 +32,21 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
+
+
+//Seed das Roles
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    
+    foreach (var role in Roles.TodosRoles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
