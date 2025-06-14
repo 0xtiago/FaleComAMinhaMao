@@ -21,6 +21,13 @@ builder.Services.AddDefaultIdentity<UsuarioModel>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/conta/login";          
+    options.LogoutPath = "/conta/logout";          
+    options.AccessDeniedPath = "/conta/acesso-negado"; 
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
