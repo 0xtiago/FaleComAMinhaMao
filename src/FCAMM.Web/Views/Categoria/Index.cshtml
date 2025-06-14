@@ -1,0 +1,170 @@
+@model List<FCAMM.Core.Models.CategoriaModel>
+@{
+    ViewData["Title"] = "Gerenciar Categorias";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Gerenciar Categorias</h2>
+                <a asp-action="Criar" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Nova Categoria
+                </a>
+            </div>
+
+            <!-- Filtros -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Buscar</label>
+                            <input type="text" name="busca" value="@ViewData["Busca"]" class="form-control" placeholder="Nome ou descrição...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select name="ativo" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="true" selected="@(ViewData["Ativo"]?.ToString() == "True")">Ativos</option>
+                                <option value="false" selected="@(ViewData["Ativo"]?.ToString() == "False")">Inativos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-outline-primary me-2">
+                                <i class="bi bi-search me-1"></i>Filtrar
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Limpar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabela de Categorias -->
+            <div class="card">
+                <div class="card-body">
+                    @if (Model.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Slug</th>
+                                        <th>Posts</th>
+                                        <th>Status</th>
+                                        <th>Data Criação</th>
+                                        <th width="180">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var categoria in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@categoria.Nome</strong>
+                                                @if (!string.IsNullOrEmpty(categoria.Descricao))
+                                                {
+                                                    <br><small class="text-muted">@categoria.Descricao</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <code>@categoria.Slug</code>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@categoria.Posts.Count</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge @(categoria.Ativo ? "bg-success" : "bg-danger")">
+                                                    @(categoria.Ativo ? "Ativo" : "Inativo")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @categoria.DataCriacao.ToString("dd/MM/yyyy")
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a asp-action="Editar" asp-route-id="@categoria.Id" class="btn btn-sm btn-outline-primary" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleAtivo(@categoria.Id)" title="Ativar/Desativar">
+                                                        <i class="bi bi-@(categoria.Ativo ? "eye-slash" : "eye")"></i>
+                                                    </button>
+                                                    <a asp-action="Excluir" asp-route-id="@categoria.Id" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                                        <i class="bi bi-trash"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Paginação -->
+                        @if ((int)ViewData["TotalPaginas"] > 1)
+                        {
+                            <nav class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    @for (int i = 1; i <= (int)ViewData["TotalPaginas"]; i++)
+                                    {
+                                        <li class="page-item @(i == (int)ViewData["PaginaAtual"] ? "active" : "")">
+                                            <a class="page-link" asp-action="Index" asp-route-pagina="@i" asp-route-busca="@ViewData["Busca"]" asp-route-ativo="@ViewData["Ativo"]">@i</a>
+                                        </li>
+                                    }
+                                </ul>
+                            </nav>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="bi bi-folder2-open display-1 text-muted"></i>
+                            <h4 class="text-muted mt-3">Nenhuma categoria encontrada</h4>
+                            <p class="text-muted">Crie a primeira categoria para começar a organizar os textos.</p>
+                            <a asp-action="Criar" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Criar Primeira Categoria
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Info de rodapé -->
+            @if (Model.Any())
+            {
+                <div class="mt-3 text-muted text-center">
+                    Mostrando @Model.Count de @ViewData["TotalItens"] categorias
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleAtivo(id) {
+            if (confirm('Deseja alterar o status desta categoria?')) {
+                fetch(`/admin/categorias/toggle-ativo/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Erro ao alterar status da categoria.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao processar solicitação.');
+                });
+            }
+        }
+    </script>
+}

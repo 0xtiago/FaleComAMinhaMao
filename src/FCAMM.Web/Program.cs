@@ -1,6 +1,7 @@
 using FCAMM.Core.Contants;
 using FCAMM.Core.Data;
 using FCAMM.Core.Models;
+using FCAMM.Core.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,6 +25,8 @@ builder.Services.AddDefaultIdentity<UsuarioModel>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddScoped<ISluggerService, SluggerService>();
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/conta/login";          
@@ -34,19 +37,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 var app = builder.Build();
 
 
-//Seed das Roles
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    
-    foreach (var role in Roles.TodosRoles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
-}
+// ===== EXECUTAR SEEDING =====
+await DBSeederService.SeedDatabaseAsync(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
