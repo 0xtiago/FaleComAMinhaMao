@@ -64,20 +64,24 @@ public class ContaController : Controller
 
                 //Faz login automagicamente
                 await _signInManager.SignInAsync(user, false);
+                
+                TempData["Success"] = $"Bem-vindo, {model.NomeCompleto}! Sua conta foi criada com sucesso.";
 
                 return RedirectToLocal(returnUrl);
             }
 
             // Se houve erros, adiciona-os ao ModelState para exibir na view
             AddErrors(result);
+            TempData["Error"] = "Erro ao criar conta. Verifique as informações fornecidas.";
 
         }
+        
 
         return View(model);
     }
 
 
-[HttpGet("login")]
+    [HttpGet("login")]
     [AllowAnonymous]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
@@ -106,6 +110,7 @@ public class ContaController : Controller
             if (result.Succeeded)
             {
                 _logger.LogInformation("Usuário logado {Email}", model.Email);
+                TempData["Success"] = "Login realizado com sucesso!";
                 return RedirectToLocal(returnUrl);
             }
 
@@ -123,13 +128,15 @@ public class ContaController : Controller
                 return View(model);
             }
 
-            
+            // Login falhou
+            ModelState.AddModelError(string.Empty, "Email ou senha incorretos.");
+            TempData["Error"] = "Credenciais inválidas. Verifique seu email e senha.";
 
 
         }
-        // Login falhou
-        ModelState.AddModelError(string.Empty, "Email ou senha incorretos.");
-        return View(model); 
+
+        // Se chegou até aqui, algo deu errado
+        return View(model);
     }
 
 
