@@ -1,0 +1,378 @@
+@using FCAMM.Core.Enums
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model FCAMM.Core.Models.TagModel
+
+@{
+    ViewData["Title"] = $"Excluir #{Model.Nome}";
+}
+
+<!-- Breadcrumb Manual -->
+<nav aria-label="breadcrumb" class="bg-light py-2 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin">
+                    <i class="bi bi-house me-1"></i>Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/tags">Tags</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Excluir #@Model.Nome</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão da Tag
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+
+                <p class="lead">
+                    Tem certeza que deseja excluir a tag <strong class="text-primary">#@Model.Nome</strong>?
+                </p>
+
+                <!-- Informações da Tag -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="card-title mb-0">
+                                <span class="badge bg-primary fs-5">#@Model.Nome</span>
+                            </h5>
+                            <small class="text-muted">
+                                ID: @Model.Id
+                            </small>
+                        </div>
+                        
+                        <div class="row mb-2">
+                            <div class="col-sm-3">
+                                <strong>Slug:</strong>
+                            </div>
+                            <div class="col-sm-9">
+                                <code>@Model.Slug</code>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <strong>Criado em:</strong>
+                            </div>
+                            <div class="col-sm-9">
+                                @Model.DataCriacao.ToString("dd/MM/yyyy 'às' HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impacto da Exclusão -->
+                @if (Model.PostTags != null && Model.PostTags.Any())
+                {
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Impacto da Exclusão
+                        </h5>
+                        <p class="mb-3">
+                            Esta tag está sendo usada em <strong>@Model.PostTags.Count post(s)</strong>. 
+                            Ao excluir esta tag:
+                        </p>
+                        <ul class="mb-3">
+                            <li>A tag será <strong>removida de todos os posts</strong></li>
+                            <li>Os posts <strong>não serão excluídos</strong></li>
+                            <li>Esta ação <strong>não pode ser desfeita</strong></li>
+                            <li>Links para <code>/tags/@Model.Slug</code> <strong>deixarão de funcionar</strong></li>
+                        </ul>
+                        
+                        <!-- Estatísticas dos Posts -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <div class="card border-success">
+                                    <div class="card-body text-center p-2">
+                                        <h5 class="text-success mb-1">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.Aprovado)</h5>
+                                        <small class="text-muted">Publicados</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-body text-center p-2">
+                                        <h5 class="text-warning mb-1">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.AguardandoAprovacao)</h5>
+                                        <small class="text-muted">Pendentes</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card border-secondary">
+                                    <div class="card-body text-center p-2">
+                                        <h5 class="text-secondary mb-1">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.Rascunho)</h5>
+                                        <small class="text-muted">Rascunhos</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Lista dos Posts -->
+                        <div class="border rounded p-3 bg-white">
+                            <h6 class="mb-2">
+                                <i class="bi bi-file-text me-1"></i>
+                                Posts que perderão esta tag:
+                            </h6>
+                            <div class="row">
+                                @foreach (var postTag in Model.PostTags.Take(10))
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            @if (postTag.PostModel.Status == StatusPostEnum.Aprovado)
+                                            {
+                                                <i class="bi bi-check-circle text-success me-2"></i>
+                                            }
+                                            else if (postTag.PostModel.Status == StatusPostEnum.AguardandoAprovacao)
+                                            {
+                                                <i class="bi bi-clock text-warning me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-file-earmark text-secondary me-2"></i>
+                                            }
+                                            <span class="text-truncate" title="@postTag.PostModel.Titulo">
+                                                @postTag.PostModel.Titulo
+                                            </span>
+                                        </div>
+                                        <small class="text-muted ms-4">
+                                            por @(postTag.PostModel.Autor?.Nome ?? "Autor desconhecido")
+                                        </small>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @if (Model.PostTags.Count > 10)
+                            {
+                                <div class="text-muted mt-2">
+                                    <small>... e mais @(Model.PostTags.Count - 10) post(s)</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Esta tag não está sendo usada em nenhum post e pode ser excluída com segurança.
+                    </div>
+                }
+
+                <!-- Ações -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="/admin/tags" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Cancelar
+                    </a>
+                    <a href="/admin/tags/detalhes/@Model.Id" class="btn btn-info">
+                        <i class="bi bi-eye me-1"></i>
+                        Ver Detalhes
+                    </a>
+                    @if (Model.PostTags?.Count > 0)
+                    {
+                        <button type="button" class="btn btn-warning" onclick="showReplacementModal()">
+                            <i class="bi bi-arrow-repeat me-1"></i>
+                            Substituir por Outra Tag
+                        </button>
+                    }
+                    <form action="/admin/tags/excluir/@Model.Id" method="post" class="d-inline" id="deleteForm">
+                        @Html.AntiForgeryToken()
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                            <i class="bi bi-trash me-1"></i>
+                            Confirmar Exclusão
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Substituição de Tag -->
+@if (Model.PostTags?.Count > 0)
+{
+    <div class="modal fade" id="replacementModal" tabindex="-1" aria-labelledby="replacementModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="replacementModalLabel">
+                        <i class="bi bi-arrow-repeat me-2"></i>
+                        Substituir Tag
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Você pode substituir <strong>#@Model.Nome</strong> por outra tag existente 
+                        em todos os @Model.PostTags.Count post(s) antes de excluí-la.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label for="replacementTag" class="form-label">Nova tag:</label>
+                        <input type="text" class="form-control" id="replacementTag" 
+                               placeholder="Digite o nome da tag substituta">
+                        <div class="form-text">
+                            A tag deve já existir no sistema. Se não existir, ela será criada automaticamente.
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>O que acontecerá:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Todos os posts receberão a nova tag</li>
+                            <li>A tag #@Model.Nome será removida</li>
+                            <li>A nova tag será criada se não existir</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning" onclick="replaceAndDelete()">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Substituir e Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de Confirmação Final -->
+<div class="modal fade" id="finalConfirmModal" tabindex="-1" aria-labelledby="finalConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="finalConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmação Final
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="bi bi-hash display-1 text-danger mb-3"></i>
+                    <h4>Você tem certeza absoluta?</h4>
+                    <p class="mb-3">
+                        A tag <strong class="text-primary">#@Model.Nome</strong> será permanentemente excluída.
+                    </p>
+                    
+                    @if (Model.PostTags != null && Model.PostTags.Any())
+                    {
+                        <div class="alert alert-warning">
+                            Será removida de <strong>@Model.PostTags.Count post(s)</strong>
+                        </div>
+                    }
+                    
+                    <p class="text-muted">
+                        Para confirmar, digite <strong>@Model.Nome.ToUpper()</strong> abaixo:
+                    </p>
+                    <input type="text" id="confirmText" class="form-control text-center" 
+                           placeholder="Digite @Model.Nome.ToUpper()" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="finalDeleteBtn" disabled onclick="submitDelete()">
+                    <i class="bi bi-trash me-1"></i>
+                    Excluir Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const tagName = '@Model.Nome';
+        
+        function confirmDelete() {
+            const modal = new bootstrap.Modal(document.getElementById('finalConfirmModal'));
+            modal.show();
+            
+            // Reset
+            document.getElementById('confirmText').value = '';
+            document.getElementById('finalDeleteBtn').disabled = true;
+        }
+
+        function showReplacementModal() {
+            const modal = new bootstrap.Modal(document.getElementById('replacementModal'));
+            modal.show();
+            document.getElementById('replacementTag').value = '';
+        }
+
+        // Verificar texto de confirmação
+        document.getElementById('confirmText').addEventListener('input', function() {
+            const confirmBtn = document.getElementById('finalDeleteBtn');
+            if (this.value.toUpperCase() === tagName.toUpperCase()) {
+                confirmBtn.disabled = false;
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+
+        function submitDelete() {
+            const confirmText = document.getElementById('confirmText').value;
+            if (confirmText.toUpperCase() === tagName.toUpperCase()) {
+                // Mostrar loading
+                const btn = document.getElementById('finalDeleteBtn');
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Excluindo...';
+                btn.disabled = true;
+                
+                // Submeter formulário
+                document.getElementById('deleteForm').submit();
+            }
+        }
+
+        function replaceAndDelete() {
+            const newTag = document.getElementById('replacementTag').value.trim();
+            if (!newTag) {
+                alert('Digite o nome da tag substituta!');
+                return;
+            }
+
+            // Criar form para substituição
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/tags/replace-and-delete/@Model.Id';
+            
+            const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) {
+                const newTokenInput = tokenInput.cloneNode();
+                form.appendChild(newTokenInput);
+            }
+            
+            const newTagInput = document.createElement('input');
+            newTagInput.type = 'hidden';
+            newTagInput.name = 'newTagName';
+            newTagInput.value = newTag;
+            form.appendChild(newTagInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // Enter no input de confirmação
+        document.getElementById('confirmText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.toUpperCase() === tagName.toUpperCase()) {
+                submitDelete();
+            }
+        });
+    </script>
+}

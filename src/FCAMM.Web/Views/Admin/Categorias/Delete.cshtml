@@ -1,0 +1,269 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model FCAMM.Core.Models.CategoriaModel
+
+@{
+    ViewData["Title"] = $"Excluir {Model.Nome}";
+}
+
+<!-- Breadcrumb Manual -->
+<nav aria-label="breadcrumb" class="bg-light py-2 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin">
+                    <i class="bi bi-house me-1"></i>Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/categorias">Categorias</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Excluir @Model.Nome</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atenção!</strong> Esta ação não pode ser desfeita.
+                </div>
+
+                <p class="lead">
+                    Tem certeza que deseja excluir a categoria <strong>"@Model.Nome"</strong>?
+                </p>
+
+                <!-- Informações da Categoria -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-tag me-1"></i>
+                            @Model.Nome
+                            @if (Model.Ativo)
+                            {
+                                <span class="badge bg-success ms-2">Ativo</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger ms-2">Inativo</span>
+                            }
+                        </h5>
+
+                        <div class="row mb-2">
+                            <div class="col-sm-3">
+                                <strong>Slug:</strong>
+                            </div>
+                            <div class="col-sm-9">
+                                <code>@Model.Slug</code>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Descricao))
+                        {
+                            <div class="row mb-2">
+                                <div class="col-sm-3">
+                                    <strong>Descrição:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    @Model.Descricao
+                                </div>
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <strong>Criado em:</strong>
+                            </div>
+                            <div class="col-sm-9">
+                                @Model.DataCriacao.ToString("dd/MM/yyyy 'às' HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impacto da Exclusão -->
+                @if (Model.Posts != null && Model.Posts.Any())
+                {
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Impacto da Exclusão
+                        </h5>
+                        <p class="mb-3">
+                            Esta categoria possui <strong>@Model.Posts.Count post(s)</strong> associado(s).
+                            Ao excluir esta categoria:
+                        </p>
+                        <ul class="mb-3">
+                            <li>Todos os posts serão <strong>movidos para "Sem Categoria"</strong></li>
+                            <li>Os posts <strong>não serão excluídos</strong></li>
+                            <li>Esta ação <strong>não pode ser desfeita</strong></li>
+                        </ul>
+
+                        <!-- Lista dos Posts -->
+                        <div class="border rounded p-3 bg-white">
+                            <h6 class="mb-2">
+                                <i class="bi bi-file-text me-1"></i>
+                                Posts que serão afetados:
+                            </h6>
+                            <div class="row">
+                                @foreach (var post in Model.Posts.Take(10))
+                                {
+                                    <div class="col-md-6 mb-2">
+                                        <div class="d-flex align-items-center">
+                                            @if (post.Status == FCAMM.Core.Enums.StatusPostEnum.Aprovado)
+                                            {
+                                                <i class="bi bi-check-circle text-success me-2"></i>
+                                            }
+                                            else if (post.Status == FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao)
+                                            {
+                                                <i class="bi bi-clock text-warning me-2"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-file-earmark text-secondary me-2"></i>
+                                            }
+                                            <span class="text-truncate" title="@post.Titulo">
+                                                @post.Titulo
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (Model.Posts.Count > 10)
+                            {
+                                <div class="text-muted mt-2">
+                                    <small>... e mais @(Model.Posts.Count - 10) post(s)</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Esta categoria não possui posts associados e pode ser excluída com segurança.
+                    </div>
+                }
+
+                <!-- Ações -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="/admin/categorias" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Cancelar
+                    </a>
+                    <a href="/admin/categorias/detalhes/@Model.Id" class="btn btn-info">
+                        <i class="bi bi-eye me-1"></i>
+                        Ver Detalhes
+                    </a>
+                    <form action="/admin/categorias/excluir/@Model.Id" method="post" class="d-inline" id="deleteForm">
+                        @Html.AntiForgeryToken()
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                            <i class="bi bi-trash me-1"></i>
+                            Confirmar Exclusão
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação Final -->
+<div class="modal fade" id="finalConfirmModal" tabindex="-1" aria-labelledby="finalConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="finalConfirmModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmação Final
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="bi bi-exclamation-triangle display-1 text-danger mb-3"></i>
+                    <h4>Você tem certeza absoluta?</h4>
+                    <p class="mb-3">
+                        A categoria <strong>"@Model.Nome"</strong> será permanentemente excluída.
+                    </p>
+
+                    @if (Model.Posts != null && Model.Posts.Any())
+                    {
+                        <div class="alert alert-warning">
+                            <strong>@Model.Posts.Count post(s)</strong> serão movidos para "Sem Categoria"
+                        </div>
+                    }
+
+                    <p class="text-muted">
+                        Para confirmar, digite <strong>EXCLUIR</strong> abaixo:
+                    </p>
+                    <input type="text" id="confirmText" class="form-control text-center" placeholder="Digite EXCLUIR" autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" id="finalDeleteBtn" disabled onclick="submitDelete()">
+                    <i class="bi bi-trash me-1"></i>
+                    Excluir Definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete() {
+            const modal = new bootstrap.Modal(document.getElementById('finalConfirmModal'));
+            modal.show();
+
+            // Reset
+            document.getElementById('confirmText').value = '';
+            document.getElementById('finalDeleteBtn').disabled = true;
+        }
+
+        // Verificar texto de confirmação
+        document.getElementById('confirmText').addEventListener('input', function() {
+            const confirmBtn = document.getElementById('finalDeleteBtn');
+            if (this.value.toUpperCase() === 'EXCLUIR') {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('btn-danger');
+                confirmBtn.classList.add('btn-danger');
+            } else {
+                confirmBtn.disabled = true;
+            }
+        });
+
+        function submitDelete() {
+            const confirmText = document.getElementById('confirmText').value;
+            if (confirmText.toUpperCase() === 'EXCLUIR') {
+                // Mostrar loading
+                const btn = document.getElementById('finalDeleteBtn');
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Excluindo...';
+                btn.disabled = true;
+
+                // Submeter formulário
+                document.getElementById('deleteForm').submit();
+            }
+        }
+
+        // Enter no input de confirmação
+        document.getElementById('confirmText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.toUpperCase() === 'EXCLUIR') {
+                submitDelete();
+            }
+        });
+    </script>
+}

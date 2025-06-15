@@ -216,7 +216,7 @@ else
 
         function confirmDelete(id, nome) {
             document.getElementById('categoriaName').textContent = nome;
-            document.getElementById('deleteForm').action = '/Admin/Categorias/Delete/' + id;
+            document.getElementById('deleteForm').action = '/Admin/Categorias/Excluir/' + id;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 

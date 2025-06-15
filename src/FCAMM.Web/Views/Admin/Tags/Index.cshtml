@@ -251,7 +251,7 @@ else
 
         function confirmDelete(id, nome) {
             document.getElementById('tagName').textContent = nome;
-            document.getElementById('deleteForm').action = '/Admin/Tags/Delete/' + id;
+            document.getElementById('deleteForm').action = '/Admin/Tags/Excluir/' + id;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 

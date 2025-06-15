@@ -306,7 +306,7 @@ public IActionResult BulkCreate()
 // POST: /admin/tags/criar-lote
 [HttpPost("criar-lote")]
 [ValidateAntiForgeryToken]
-public async Task<IActionResult> CriarLote(string tagNames)
+public async Task<IActionResult> BulkCreate(string tagNames)
 {
     if (string.IsNullOrWhiteSpace(tagNames))
     {

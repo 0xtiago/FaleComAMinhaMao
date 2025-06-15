@@ -1,0 +1,478 @@
+@{
+    ViewData["Title"] = "Criar Tags em Lote";
+}
+
+<!-- Breadcrumb Manual -->
+<nav aria-label="breadcrumb" class="bg-light py-2 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin">
+                    <i class="bi bi-house me-1"></i>Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/tags">Tags</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Criar em Lote</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-plus-square me-2"></i>
+                    Criar Tags em Lote
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Como usar:</strong> Digite as tags separadas por vírgula.
+                    Tags duplicadas e já existentes serão ignoradas automaticamente.
+                </div>
+
+                <form action="/admin/tags/bulk-create" method="post" id="bulkCreateForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-4">
+                                <label for="tagNames" class="form-label">
+                                    <i class="bi bi-hash me-1"></i>Tags (separadas por vírgula)
+                                </label>
+                                <textarea class="form-control" id="tagNames" name="tagNames" rows="8"
+                                          placeholder="tecnologia, programação, web, mobile, design, javascript, css, html, react, vue, angular, python, java, csharp"
+                                          maxlength="2000"></textarea>
+                                <div class="form-text">
+                                    <i class="bi bi-lightbulb me-1"></i>
+                                    <strong>Exemplo:</strong> tecnologia, programação, web, mobile, design
+                                    <span class="ms-3"><span id="totalCharCount">0</span>/2000 caracteres</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estatísticas em tempo real -->
+                        <div class="col-md-4">
+                            <div class="card border-primary mb-3">
+                                <div class="card-header bg-primary text-white text-center">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-graph-up me-1"></i>Estatísticas
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Total digitado:</small>
+                                        <span class="badge bg-secondary" id="totalTagsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Únicas:</small>
+                                        <span class="badge bg-info" id="uniqueTagsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Válidas:</small>
+                                        <span class="badge bg-success" id="validTagsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">Duplicadas:</small>
+                                        <span class="badge bg-warning" id="duplicateTagsCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Inválidas:</small>
+                                        <span class="badge bg-danger" id="invalidTagsCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="card border-info mb-3">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">
+                                        <i class="bi bi-speedometer2 me-1"></i>Progresso
+                                    </h6>
+                                    <div class="progress mb-2" style="height: 10px;">
+                                        <div class="progress-bar bg-success" role="progressbar" id="validProgress" style="width: 0%"></div>
+                                        <div class="progress-bar bg-warning" role="progressbar" id="duplicateProgress" style="width: 0%"></div>
+                                        <div class="progress-bar bg-danger" role="progressbar" id="invalidProgress" style="width: 0%"></div>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-success">Válidas</small>
+                                        <small class="text-warning">Duplicadas</small>
+                                        <small class="text-danger">Inválidas</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview das Tags -->
+                    <div id="tagsPreview" class="mb-4" style="display: none;">
+                        <label class="form-label">
+                            <i class="bi bi-eye me-1"></i>Preview das tags:
+                        </label>
+
+                        <!-- Tags Válidas -->
+                        <div id="validTagsContainer" class="mb-3" style="display: none;">
+                            <h6 class="text-success mb-2">
+                                <i class="bi bi-check-circle me-1"></i>Tags que serão criadas:
+                            </h6>
+                            <div id="validTagsPreview" class="p-3 bg-light rounded border"></div>
+                        </div>
+
+                        <!-- Tags Duplicadas -->
+                        <div id="duplicateTagsContainer" class="mb-3" style="display: none;">
+                            <h6 class="text-warning mb-2">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Tags duplicadas (ignoradas):
+                            </h6>
+                            <div id="duplicateTagsPreview" class="p-3 bg-warning bg-opacity-10 rounded border"></div>
+                        </div>
+
+                        <!-- Tags Inválidas -->
+                        <div id="invalidTagsContainer" class="mb-3" style="display: none;">
+                            <h6 class="text-danger mb-2">
+                                <i class="bi bi-x-circle me-1"></i>Tags inválidas (corrigir):
+                            </h6>
+                            <div id="invalidTagsPreview" class="p-3 bg-danger bg-opacity-10 rounded border"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle me-1"></i>
+                            Criar <span id="submitCount">0</span> Tags
+                        </button>
+                        <a href="/admin/tags" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                        <button type="button" class="btn btn-outline-warning" onclick="clearAll()">
+                            <i class="bi bi-trash me-1"></i>
+                            Limpar Tudo
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="formatTags()">
+                            <i class="bi bi-magic me-1"></i>
+                            Formatar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Card com Sugestões -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Sugestões de Tags por Categoria
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Clique em qualquer grupo para adicionar todas as tags:</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-code-slash me-1"></i>Tecnologia & Programação
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="tecnologia, programacao, desenvolvimento, software, codigo, algoritmo, estrutura-dados">
+                            <span class="badge bg-outline-primary me-1 mb-1">#tecnologia</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#programacao</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#desenvolvimento</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#software</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#codigo</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#algoritmo</span>
+                            <span class="badge bg-outline-primary me-1 mb-1">#estrutura-dados</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-success mb-2">
+                            <i class="bi bi-globe me-1"></i>Desenvolvimento Web
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="html, css, javascript, typescript, react, vue, angular, nodejs, frontend, backend">
+                            <span class="badge bg-outline-success me-1 mb-1">#html</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#css</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#javascript</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#typescript</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#react</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#vue</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#angular</span>
+                            <span class="badge bg-outline-success me-1 mb-1">#nodejs</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-warning mb-2">
+                            <i class="bi bi-phone me-1"></i>Mobile & Apps
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="mobile, android, ios, flutter, react-native, xamarin, app, kotlin, swift">
+                            <span class="badge bg-outline-warning me-1 mb-1">#mobile</span>
+                            <span class="badge bg-outline-warning me-1 mb-1">#android</span>
+                            <span class="badge bg-outline-warning me-1 mb-1">#ios</span>
+                            <span class="badge bg-outline-warning me-1 mb-1">#flutter</span>
+                            <span class="badge bg-outline-warning me-1 mb-1">#react-native</span>
+                            <span class="badge bg-outline-warning me-1 mb-1">#app</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-info mb-2">
+                            <i class="bi bi-book me-1"></i>Conteúdo & Tutoriais
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="tutorial, dicas, review, opiniao, analise, guia, exemplo, pratica">
+                            <span class="badge bg-outline-info me-1 mb-1">#tutorial</span>
+                            <span class="badge bg-outline-info me-1 mb-1">#dicas</span>
+                            <span class="badge bg-outline-info me-1 mb-1">#review</span>
+                            <span class="badge bg-outline-info me-1 mb-1">#opiniao</span>
+                            <span class="badge bg-outline-info me-1 mb-1">#analise</span>
+                            <span class="badge bg-outline-info me-1 mb-1">#guia</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-purple mb-2">
+                            <i class="bi bi-database me-1"></i>Banco de Dados
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="database, sql, mysql, postgresql, mongodb, redis, orm, migration">
+                            <span class="badge bg-outline-dark me-1 mb-1">#database</span>
+                            <span class="badge bg-outline-dark me-1 mb-1">#sql</span>
+                            <span class="badge bg-outline-dark me-1 mb-1">#mysql</span>
+                            <span class="badge bg-outline-dark me-1 mb-1">#postgresql</span>
+                            <span class="badge bg-outline-dark me-1 mb-1">#mongodb</span>
+                            <span class="badge bg-outline-dark me-1 mb-1">#orm</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <h6 class="text-danger mb-2">
+                            <i class="bi bi-tools me-1"></i>Ferramentas & DevOps
+                        </h6>
+                        <div class="suggestion-group p-2 rounded border" style="cursor: pointer;"
+                             data-tags="git, docker, kubernetes, jenkins, ci-cd, aws, azure, devops, linux">
+                            <span class="badge bg-outline-danger me-1 mb-1">#git</span>
+                            <span class="badge bg-outline-danger me-1 mb-1">#docker</span>
+                            <span class="badge bg-outline-danger me-1 mb-1">#kubernetes</span>
+                            <span class="badge bg-outline-danger me-1 mb-1">#ci-cd</span>
+                            <span class="badge bg-outline-danger me-1 mb-1">#aws</span>
+                            <span class="badge bg-outline-danger me-1 mb-1">#devops</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let existingTags = []; // Array para tags já existentes (seria carregado via AJAX)
+
+        document.getElementById('tagNames').addEventListener('input', function() {
+            updatePreview();
+            updateCharCount();
+        });
+
+        function updateCharCount() {
+            const text = document.getElementById('tagNames').value;
+            document.getElementById('totalCharCount').textContent = text.length;
+        }
+
+        function updatePreview() {
+            const input = document.getElementById('tagNames').value;
+            const preview = document.getElementById('tagsPreview');
+
+            if (input.trim()) {
+                const tags = input
+                    .split(',')
+                    .map(tag => tag.trim())
+                    .filter(tag => tag.length > 0);
+
+                // Processar tags
+                const processed = processTags(tags);
+
+                // Atualizar contadores
+                updateCounters(processed);
+
+                // Atualizar preview
+                updateTagsPreview(processed);
+
+                // Habilitar/desabilitar botão
+                document.getElementById('submitBtn').disabled = processed.valid.length === 0;
+                document.getElementById('submitCount').textContent = processed.valid.length;
+
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+                document.getElementById('submitBtn').disabled = true;
+                resetCounters();
+            }
+        }
+
+        function processTags(tags) {
+            const seen = new Set();
+            const valid = [];
+            const duplicates = [];
+            const invalid = [];
+
+            tags.forEach(tag => {
+                const cleanTag = tag.toLowerCase();
+                const slug = generateSlug(tag);
+
+                // Verificar se é válida
+                if (!isValidTag(tag)) {
+                    invalid.push(tag);
+                    return;
+                }
+
+                // Verificar duplicatas
+                if (seen.has(cleanTag)) {
+                    duplicates.push(tag);
+                    return;
+                }
+
+                seen.add(cleanTag);
+                valid.push(tag);
+            });
+
+            return { valid, duplicates, invalid, total: tags.length };
+        }
+
+        function isValidTag(tag) {
+            if (!tag || tag.length > 50) return false;
+            const slug = generateSlug(tag);
+            return /^[a-z0-9-]+$/.test(slug) && slug.length > 0;
+        }
+
+        function updateCounters(processed) {
+            document.getElementById('totalTagsCount').textContent = processed.total;
+            document.getElementById('uniqueTagsCount').textContent = processed.valid.length + processed.duplicates.length + processed.invalid.length;
+            document.getElementById('validTagsCount').textContent = processed.valid.length;
+            document.getElementById('duplicateTagsCount').textContent = processed.duplicates.length;
+            document.getElementById('invalidTagsCount').textContent = processed.invalid.length;
+
+            // Atualizar progress bar
+            const total = processed.total || 1;
+            const validPercent = (processed.valid.length / total) * 100;
+            const duplicatePercent = (processed.duplicates.length / total) * 100;
+            const invalidPercent = (processed.invalid.length / total) * 100;
+
+            document.getElementById('validProgress').style.width = validPercent + '%';
+            document.getElementById('duplicateProgress').style.width = duplicatePercent + '%';
+            document.getElementById('invalidProgress').style.width = invalidPercent + '%';
+        }
+
+        function updateTagsPreview(processed) {
+            // Tags válidas
+            const validContainer = document.getElementById('validTagsContainer');
+            const validPreview = document.getElementById('validTagsPreview');
+            if (processed.valid.length > 0) {
+                validPreview.innerHTML = processed.valid.map(tag =>
+                    `<span class="badge bg-success me-1 mb-1">#${tag}</span>`
+                ).join('');
+                validContainer.style.display = 'block';
+            } else {
+                validContainer.style.display = 'none';
+            }
+
+            // Tags duplicadas
+            const duplicateContainer = document.getElementById('duplicateTagsContainer');
+            const duplicatePreview = document.getElementById('duplicateTagsPreview');
+            if (processed.duplicates.length > 0) {
+                duplicatePreview.innerHTML = processed.duplicates.map(tag =>
+                    `<span class="badge bg-warning me-1 mb-1">#${tag}</span>`
+                ).join('');
+                duplicateContainer.style.display = 'block';
+            } else {
+                duplicateContainer.style.display = 'none';
+            }
+
+            // Tags inválidas
+            const invalidContainer = document.getElementById('invalidTagsContainer');
+            const invalidPreview = document.getElementById('invalidTagsPreview');
+            if (processed.invalid.length > 0) {
+                invalidPreview.innerHTML = processed.invalid.map(tag =>
+                    `<span class="badge bg-danger me-1 mb-1">#${tag}</span>`
+                ).join('');
+                invalidContainer.style.display = 'block';
+            } else {
+                invalidContainer.style.display = 'none';
+            }
+        }
+
+        function resetCounters() {
+            document.getElementById('totalTagsCount').textContent = '0';
+            document.getElementById('uniqueTagsCount').textContent = '0';
+            document.getElementById('validTagsCount').textContent = '0';
+            document.getElementById('duplicateTagsCount').textContent = '0';
+            document.getElementById('invalidTagsCount').textContent = '0';
+            document.getElementById('submitCount').textContent = '0';
+
+            ['validProgress', 'duplicateProgress', 'invalidProgress'].forEach(id => {
+                document.getElementById(id).style.width = '0%';
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('tagNames').value = '';
+            updatePreview();
+            updateCharCount();
+        }
+
+        function formatTags() {
+            const input = document.getElementById('tagNames');
+            const tags = input.value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag.length > 0)
+                .map(tag => generateSlug(tag))
+                .filter(tag => tag.length > 0);
+
+            input.value = [...new Set(tags)].join(', ');
+            updatePreview();
+        }
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "");
+        }
+
+        // Adicionar tags sugeridas
+        document.querySelectorAll('.suggestion-group').forEach(group => {
+            group.addEventListener('click', function() {
+                const tags = this.dataset.tags;
+                const currentInput = document.getElementById('tagNames').value;
+                const newInput = currentInput ? currentInput + ', ' + tags : tags;
+                document.getElementById('tagNames').value = newInput;
+                updatePreview();
+                updateCharCount();
+            });
+        });
+
+        // Validação do formulário
+        document.getElementById('bulkCreateForm').addEventListener('submit', function(e) {
+            const input = document.getElementById('tagNames').value.trim();
+            if (!input) {
+                e.preventDefault();
+                alert('Digite pelo menos uma tag!');
+                document.getElementById('tagNames').focus();
+            }
+        });
+
+        // Inicializar
+        updateCharCount();
+    </script>
+}
