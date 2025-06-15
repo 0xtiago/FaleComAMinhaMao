@@ -1,0 +1,231 @@
+@model FCAMM.Web.ViewModels.Categoria.CriarCategoriaViewModel
+
+@{
+    ViewData["Title"] = "Nova Categoria";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/Admin", IsActive = false },
+        new { Text = "Categorias", Url = "/admin/categorias", IsActive = false },
+        new { Text = "Nova Categoria", Url = "", IsActive = true }
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nova Categoria
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" id="categoriaForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nome" class="form-label">
+                                <i class="bi bi-tag me-1"></i>@Html.DisplayNameFor(m => m.Nome)
+                            </label>
+                            <input asp-for="Nome" class="form-control" placeholder="Ex: Tecnologia" id="nomeInput" autofocus>
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-link me-1"></i>Slug (URL)
+                            </label>
+                            <input class="form-control" placeholder="tecnologia" id="slugPreview" readonly>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Gerado automaticamente. URL: <span id="urlPreview" class="text-primary">/categorias/</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Descricao" class="form-label">
+                            <i class="bi bi-text-paragraph me-1"></i>@Html.DisplayNameFor(m => m.Descricao)
+                        </label>
+                        <textarea asp-for="Descricao" class="form-control" rows="3"
+                                  placeholder="Descreva brevemente esta categoria..." maxlength="500"></textarea>
+                        <div class="form-text">
+                            <span id="charCount">0</span>/500 caracteres
+                        </div>
+                        <span asp-validation-for="Descricao" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="Ativo" class="form-check-input" type="checkbox" checked>
+                            <label asp-for="Ativo" class="form-check-label">
+                                <i class="bi bi-check-circle me-1"></i>@Html.DisplayNameFor(m => m.Ativo)
+                            </label>
+                            <div class="form-text">Categorias inativas não aparecem para os usuários</div>
+                        </div>
+                    </div>
+
+                    <!-- Preview da Categoria -->
+                    <div class="card bg-light mb-4" id="previewCard" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-eye me-1"></i>Preview da Categoria
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="badge bg-primary rounded-pill me-2" style="width: 12px; height: 12px;"></div>
+                                <strong id="previewNome">Nome da categoria</strong>
+                                <span class="badge bg-success ms-2" id="previewStatus">Ativo</span>
+                            </div>
+                            <p class="text-muted mb-1">
+                                <code id="previewSlug">slug-da-categoria</code>
+                            </p>
+                            <p class="mb-0" id="previewDescricao">Descrição da categoria...</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Criar Categoria
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Card com Dicas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Dicas para Categorias
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Use nomes claros e descritivos (ex: "Tecnologia", "Literatura")
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Evite criar muitas categorias - mantenha entre 5-10 principais
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        A descrição ajuda usuários a entenderem o propósito da categoria
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Categorias inativas ficam ocultas mas não perdem os posts associados
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('nomeInput').addEventListener('input', function() {
+            updatePreview();
+        });
+
+        document.getElementById('Descricao').addEventListener('input', function() {
+            updateCharCount();
+            updatePreview();
+        });
+
+        document.getElementById('Ativo').addEventListener('change', function() {
+            updatePreview();
+        });
+
+        function updatePreview() {
+            const nome = document.getElementById('nomeInput').value.trim();
+            const descricao = document.getElementById('Descricao').value.trim();
+            const ativo = document.getElementById('Ativo').checked;
+            const previewCard = document.getElementById('previewCard');
+
+            if (nome) {
+                const slug = generateSlug(nome);
+
+                document.getElementById('slugPreview').value = slug;
+                document.getElementById('urlPreview').textContent = '/categorias/' + slug;
+
+                // Atualizar preview
+                document.getElementById('previewNome').textContent = nome;
+                document.getElementById('previewSlug').textContent = slug;
+                document.getElementById('previewDescricao').textContent = descricao || 'Sem descrição';
+
+                const statusBadge = document.getElementById('previewStatus');
+                if (ativo) {
+                    statusBadge.className = 'badge bg-success ms-2';
+                    statusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i>Ativo';
+                } else {
+                    statusBadge.className = 'badge bg-danger ms-2';
+                    statusBadge.innerHTML = '<i class="bi bi-x-circle me-1"></i>Inativo';
+                }
+
+                previewCard.style.display = 'block';
+            } else {
+                document.getElementById('slugPreview').value = '';
+                document.getElementById('urlPreview').textContent = '/categorias/';
+                previewCard.style.display = 'none';
+            }
+        }
+
+        function updateCharCount() {
+            const descricao = document.getElementById('Descricao').value;
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = descricao.length;
+
+            if (descricao.length > 450) {
+                charCount.className = 'text-warning';
+            } else if (descricao.length > 500) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = '';
+            }
+        }
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "");
+        }
+
+        // Validação do formulário
+        document.getElementById('categoriaForm').addEventListener('submit', function(e) {
+            const nome = document.getElementById('nomeInput').value.trim();
+            if (!nome) {
+                e.preventDefault();
+                alert('O nome da categoria é obrigatório!');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+
+            if (nome.length > 100) {
+                e.preventDefault();
+                alert('O nome da categoria deve ter no máximo 100 caracteres!');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+        });
+
+        // Inicializar contadores
+        updateCharCount();
+    </script>
+}

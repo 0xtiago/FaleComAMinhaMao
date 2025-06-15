@@ -1,0 +1,287 @@
+@model FCAMM.Web.ViewModels.Tag.CriarTagViewModel
+
+@{
+    ViewData["Title"] = "Nova Tag";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/Admin", IsActive = false },
+        new { Text = "Tags", Url = "/admin/tags", IsActive = false },
+        new { Text = "Nova Tag", Url = "", IsActive = true }
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Nova Tag
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post" id="tagForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Nome" class="form-label">
+                            <i class="bi bi-hash me-1"></i>@Html.DisplayNameFor(m => m.Nome)
+                        </label>
+                        <input asp-for="Nome" class="form-control" placeholder="Ex: tecnologia" id="nomeInput" autofocus maxlength="50">
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Use apenas letras, números e hífens. Sem espaços ou caracteres especiais.
+                            <span class="ms-2"><span id="charCount">0</span>/50 caracteres</span>
+                        </div>
+                        <span asp-validation-for="Nome" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="bi bi-link me-1"></i>Slug (URL)
+                        </label>
+                        <input class="form-control" placeholder="tecnologia" id="slugInput" readonly>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Gerado automaticamente. URL: <span id="slugPreview" class="text-primary">/tags/</span>
+                        </div>
+                    </div>
+
+                    <!-- Preview da Tag -->
+                    <div class="mb-4">
+                        <label class="form-label">Preview da Tag</label>
+                        <div class="p-3 bg-light rounded border">
+                            <span class="badge bg-primary fs-6" id="tagPreview">#</span>
+                            <div class="form-text mt-2">
+                                <small class="text-muted">Assim a tag aparecerá no site</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Criar Tag
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                        <a asp-action="BulkCreate" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-square me-1"></i>
+                            Criar Múltiplas
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Card com Tags Existentes -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-tags me-2"></i>
+                    Tags Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="tagsRecentes">
+                    <!-- Tags serão carregadas via JavaScript -->
+                    <div class="text-center text-muted">
+                        <i class="bi bi-hourglass-split"></i>
+                        Carregando tags...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card com Dicas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Dicas para Tags
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Use nomes curtos e específicos (ex: "javascript", "css")
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Evite espaços - use hífens para separar palavras
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Mantenha consistência: sempre minúsculas
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Prefira singular ao plural (ex: "tutorial" ao invés de "tutoriais")
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-check-circle text-success me-2"></i>
+                        Para criar várias tags de uma vez, use
+                        <a asp-action="BulkCreate" class="text-decoration-none">Criar Múltiplas</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Card com Sugestões -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-star me-2"></i>
+                    Sugestões Populares
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">Clique em uma tag para usar como base:</p>
+
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <strong class="text-primary">Tecnologia:</strong>
+                        <div class="mt-1">
+                            <span class="badge bg-outline-primary me-1 suggestion-tag" data-tag="tecnologia">#tecnologia</span>
+                            <span class="badge bg-outline-primary me-1 suggestion-tag" data-tag="programacao">#programacao</span>
+                            <span class="badge bg-outline-primary me-1 suggestion-tag" data-tag="desenvolvimento">#desenvolvimento</span>
+                            <span class="badge bg-outline-primary me-1 suggestion-tag" data-tag="software">#software</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-2">
+                        <strong class="text-success">Web:</strong>
+                        <div class="mt-1">
+                            <span class="badge bg-outline-success me-1 suggestion-tag" data-tag="html">#html</span>
+                            <span class="badge bg-outline-success me-1 suggestion-tag" data-tag="css">#css</span>
+                            <span class="badge bg-outline-success me-1 suggestion-tag" data-tag="javascript">#javascript</span>
+                            <span class="badge bg-outline-success me-1 suggestion-tag" data-tag="react">#react</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <strong class="text-info">Conteúdo:</strong>
+                        <div class="mt-1">
+                            <span class="badge bg-outline-info me-1 suggestion-tag" data-tag="tutorial">#tutorial</span>
+                            <span class="badge bg-outline-info me-1 suggestion-tag" data-tag="dicas">#dicas</span>
+                            <span class="badge bg-outline-info me-1 suggestion-tag" data-tag="review">#review</span>
+                            <span class="badge bg-outline-info me-1 suggestion-tag" data-tag="analise">#analise</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('nomeInput').addEventListener('input', function() {
+            updatePreview();
+            updateCharCount();
+        });
+
+        function updatePreview() {
+            const nome = this.value || document.getElementById('nomeInput').value;
+            const slug = generateSlug(nome);
+
+            document.getElementById('slugInput').value = slug;
+            document.getElementById('slugPreview').textContent = '/tags/' + slug;
+            document.getElementById('tagPreview').textContent = nome ? '#' + nome : '#';
+        }
+
+        function updateCharCount() {
+            const nome = document.getElementById('nomeInput').value;
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = nome.length;
+
+            if (nome.length > 40) {
+                charCount.className = 'text-warning';
+            } else if (nome.length >= 50) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = '';
+            }
+        }
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "");
+        }
+
+        // Sugestões de tags
+        document.querySelectorAll('.suggestion-tag').forEach(badge => {
+            badge.style.cursor = 'pointer';
+            badge.addEventListener('click', function() {
+                const tag = this.dataset.tag;
+                document.getElementById('nomeInput').value = tag;
+                updatePreview();
+                updateCharCount();
+            });
+        });
+
+        // Carregar tags recentes (simulado)
+        function loadRecentTags() {
+            const container = document.getElementById('tagsRecentes');
+
+            // Simular carregamento
+            setTimeout(() => {
+                container.innerHTML = `
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-secondary">#tecnologia</span>
+                        <span class="badge bg-secondary">#javascript</span>
+                        <span class="badge bg-secondary">#tutorial</span>
+                        <span class="badge bg-secondary">#programacao</span>
+                        <span class="badge bg-secondary">#web</span>
+                    </div>
+                    <div class="form-text mt-2">
+                        <small class="text-muted">Tags criadas recentemente no sistema</small>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        // Validação do formulário
+        document.getElementById('tagForm').addEventListener('submit', function(e) {
+            const nome = document.getElementById('nomeInput').value.trim();
+
+            if (!nome) {
+                e.preventDefault();
+                alert('O nome da tag é obrigatório!');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+
+            if (nome.length > 50) {
+                e.preventDefault();
+                alert('O nome da tag deve ter no máximo 50 caracteres!');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+
+            // Verificar se contém apenas caracteres válidos
+            const validSlug = /^[a-z0-9-]+$/;
+            const slug = generateSlug(nome);
+            if (!validSlug.test(slug)) {
+                e.preventDefault();
+                alert('O nome da tag contém caracteres inválidos. Use apenas letras, números e hífens.');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+        });
+
+        // Inicializar
+        updateCharCount();
+        loadRecentTags();
+    </script>
+}
