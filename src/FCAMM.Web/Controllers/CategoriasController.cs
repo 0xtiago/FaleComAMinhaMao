@@ -10,16 +10,16 @@ namespace FCAMM.Web.Controllers;
 
 [Route("admin/categorias")]
 [Authorize(Roles = "Admin,Moderador")]
-public class CategoriaController : Controller
+public class CategoriasController : Controller
 {
     private readonly AppDbContext _context;
     private readonly ISluggerService _sluggerService;
-    private readonly ILogger<CategoriaController> _logger;
+    private readonly ILogger<CategoriasController> _logger;
 
-    public CategoriaController(
+    public CategoriasController(
         AppDbContext context,
         ISluggerService sluggerService,
-        ILogger<CategoriaController> logger)
+        ILogger<CategoriasController> logger)
     {
         _context = context;
         _sluggerService = sluggerService;
@@ -66,7 +66,7 @@ public class CategoriaController : Controller
         ViewData["TotalPaginas"] = (int)Math.Ceiling((double)totalItens / itensPorPagina);
         ViewData["TotalItens"] = totalItens;
 
-        return View(categorias);
+        return View("~/Views/Admin/Categorias/Index.cshtml", categorias);
     }
 
     #endregion
@@ -75,15 +75,15 @@ public class CategoriaController : Controller
 
     // GET: /admin/categorias/criar
     [HttpGet("criar")]
-    public IActionResult Criar()
+    public IActionResult Create()
     {
-        return View();
+        return View("~/Views/Admin/Categorias/Create.cshtml");
     }
 
     // POST: /admin/categorias/criar
     [HttpPost("criar")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Criar(CriarCategoriaViewModel model)
+    public async Task<IActionResult> Create(CriarCategoriaViewModel model)
     {
         if (!ModelState.IsValid)
         {
@@ -118,7 +118,7 @@ public class CategoriaController : Controller
             ModelState.AddModelError(string.Empty, "Erro ao criar categoria. Tente novamente.");
         }
 
-        return View(model);
+        return View("~/Views/Admin/Categorias/Create.cshtml", model);
     }
 
     #endregion
@@ -127,7 +127,7 @@ public class CategoriaController : Controller
 
     // GET: /admin/categorias/editar/{id}
     [HttpGet("editar/{id:int}")]
-    public async Task<IActionResult> Editar(int id)
+    public async Task<IActionResult> Edit(int id)
     {
         var categoria = await _context.Categorias.FindAsync(id);
         if (categoria == null)
@@ -145,13 +145,13 @@ public class CategoriaController : Controller
             Ativo = categoria.Ativo
         };
 
-        return View(model);
+        return View("~/Views/Admin/Categorias/Edit.cshtml", model);
     }
 
     // POST: /admin/categorias/editar/{id}
     [HttpPost("editar/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Editar(int id, EditarCategoriaViewModel model)
+    public async Task<IActionResult> Edit(int id, EditarCategoriaViewModel model)
     {
         if (id != model.Id)
         {
@@ -197,16 +197,17 @@ public class CategoriaController : Controller
             ModelState.AddModelError(string.Empty, "Erro ao atualizar categoria. Tente novamente.");
         }
 
-        return View(model);
+        return View("~/Views/Admin/Categorias/Edit.cshtml", model);
     }
 
     #endregion
+    
+    
+    #region DETALHES
 
-    #region EXCLUIR
-
-    // GET: /admin/categorias/excluir/{id}
-    [HttpGet("excluir/{id:int}")]
-    public async Task<IActionResult> Excluir(int id)
+// GET: /admin/categorias/detalhes/{id}
+    [HttpGet("detalhes/{id:int}")]
+    public async Task<IActionResult> Details(int id)
     {
         var categoria = await _context.Categorias
             .Include(c => c.Posts)
@@ -218,13 +219,34 @@ public class CategoriaController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        return View(categoria);
+        return View("~/Views/Admin/Categorias/Details.cshtml", categoria);
+    }
+
+    #endregion 
+
+    #region EXCLUIR
+
+    // GET: /admin/categorias/excluir/{id}
+    [HttpGet("excluir/{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var categoria = await _context.Categorias
+            .Include(c => c.Posts)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (categoria == null)
+        {
+            TempData["Error"] = "Categoria não encontrada.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return View("~/Views/Admin/Categorias/Delete.cshtml", categoria);
     }
 
     // POST: /admin/categorias/excluir/{id}
     [HttpPost("excluir/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ExcluirConfirmado(int id)
+    public async Task<IActionResult> ConfirmDelete(int id)
     {
         try
         {
@@ -241,7 +263,7 @@ public class CategoriaController : Controller
             if (categoria.Posts.Any())
             {
                 TempData["Error"] = "Não é possível excluir uma categoria que possui posts associados.";
-                return RedirectToAction(nameof(Excluir), new { id });
+                return RedirectToAction(nameof(Delete), new { id });
             }
 
             _context.Categorias.Remove(categoria);
@@ -266,7 +288,7 @@ public class CategoriaController : Controller
     // POST: /admin/categorias/toggle-ativo/{id}
     [HttpPost("toggle-ativo/{id:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleAtivo(int id)
+    public async Task<IActionResult> ToggleEnable(int id)
     {
         try
         {

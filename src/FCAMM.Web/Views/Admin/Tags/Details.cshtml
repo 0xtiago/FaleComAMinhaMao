@@ -1,0 +1,255 @@
+@using FCAMM.Core.Enums
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model FCAMM.Core.Models.TagModel
+
+@{
+    ViewData["Title"] = $"#{Model.Nome}";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/Admin", IsActive = false },
+        new { Text = "Tags", Url = "/admin/tags", IsActive = false },
+        new { Text = Model.Nome, Url = "", IsActive = true }
+    };
+}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="bi bi-hash me-2"></i>
+                        @Model.Nome
+                    </h4>
+                    <span class="badge bg-light text-dark fs-6">#@Model.Nome</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong><i class="bi bi-hash me-1"></i>Nome:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <span class="badge bg-primary fs-6">#@Model.Nome</span>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong><i class="bi bi-link me-1"></i>Slug:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        <code>@Model.Slug</code>
+                        <a href="/tags/@Model.Slug" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-box-arrow-up-right"></i> Ver página
+                        </a>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <strong><i class="bi bi-calendar me-1"></i>Criado em:</strong>
+                    </div>
+                    <div class="col-sm-9">
+                        @Model.DataCriacao.ToString("dddd, dd 'de' MMMM 'de' yyyy 'às' HH:mm", new System.Globalization.CultureInfo("pt-BR"))
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <a asp-action="Editar" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil me-1"></i>
+                        Editar
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Voltar à Lista
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete('@Model.Id', '@Model.Nome')">
+                        <i class="bi bi-trash me-1"></i>
+                        Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Card de Estatísticas -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Estatísticas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span><i class="bi bi-file-text me-1"></i> Total de Posts:</span>
+                    <span class="badge bg-primary fs-6">@(Model.PostTags?.Count ?? 0)</span>
+                </div>
+
+                @if (Model.PostTags != null && Model.PostTags.Any())
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="bi bi-check-circle me-1"></i> Posts Publicados:</span>
+                        <span class="badge bg-success fs-6">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.Aprovado)</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="bi bi-clock me-1"></i> Posts Rascunho:</span>
+                        <span class="badge bg-warning fs-6">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.Rascunho)</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="bi bi-hourglass me-1"></i> Posts Pendentes:</span>
+                        <span class="badge bg-info fs-6">@Model.PostTags.Count(pt => pt.PostModel.Status == StatusPostEnum.AguardandoAprovacao)</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-calendar-check me-1"></i> Criado em:</span>
+                        <span class="badge bg-secondary fs-6">@Model.DataCriacao.ToString("dd/MM/yyyy")</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Card de Posts Recentes -->
+        @if (Model.PostTags != null && Model.PostTags.Any())
+        {
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-file-text me-2"></i>
+                        Posts Recentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var postTag in Model.PostTags.OrderByDescending(pt => pt.PostModel.DataCriacao).Take(5))
+                    {
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="/posts/@postTag.PostModel.Slug" target="_blank" class="text-decoration-none">
+                                        @postTag.PostModel.Titulo
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-person me-1"></i>por @(postTag.PostModel.Autor?.Nome ?? "Autor desconhecido")
+                                    <i class="bi bi-calendar ms-2 me-1"></i>@postTag.PostModel.DataCriacao.ToString("dd/MM/yyyy")
+                                </small>
+                            </div>
+                            <div class="ms-2">
+                                @if (postTag.PostModel.Status == StatusPostEnum.Aprovado)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Publicado
+                                    </span>
+                                }
+                                else if (postTag.PostModel.Status == StatusPostEnum.AguardandoAprovacao)
+                                {
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock me-1"></i>Pendente
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-file-earmark me-1"></i>Rascunho
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                        @if (!postTag.Equals(Model.PostTags.OrderByDescending(pt => pt.PostModel.DataCriacao).Take(5).Last()))
+                        {
+                            <hr class="my-2">
+                        }
+                    }
+
+                    @if (Model.PostTags.Count > 5)
+                    {
+                        <div class="text-center mt-3">
+                            <a href="/admin/posts?tag=@Model.Id" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i>Ver todos os posts
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Card de Tags Relacionadas -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-tags me-2"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/admin/tags/criar" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus-circle me-1"></i>Criar Nova Tag
+                    </a>
+                    <a href="/admin/tags/criar-lote" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-plus-square me-1"></i>Criar Múltiplas Tags
+                    </a>
+                    <a href="/tags" target="_blank" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>Ver Todas as Tags Públicas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a tag <strong>#@Model.Nome</strong>?</p>
+                @if (Model.PostTags != null && Model.PostTags.Any())
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Atenção:</strong> Esta tag está sendo usada em @Model.PostTags.Count post(s).
+                        Ela será removida de todos eles.
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Esta tag não está sendo usada em nenhum post e pode ser excluída com segurança.
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form asp-action="ExcluirConfirmado" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        Excluir Tag
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, nome) {
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+}

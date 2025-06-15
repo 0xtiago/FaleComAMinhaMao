@@ -1,0 +1,275 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<FCAMM.Core.Models.TagModel>
+
+@{
+    ViewData["Title"] = "Gerenciar Tags";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/Admin", IsActive = false },
+        new { Text = "Tags", Url = "", IsActive = true }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-hash me-2 text-primary"></i>
+            Gerenciar Tags
+        </h1>
+        <p class="text-muted mb-0">Administre as tags do blog</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bulkCreateModal">
+            <i class="bi bi-plus-square me-1"></i>
+            Criar Múltiplas
+        </button>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nova Tag
+        </a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="searchInput" placeholder="Buscar tags...">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex gap-2">
+            <select class="form-select" id="sortFilter">
+                <option value="nome">Ordenar por Nome</option>
+                <option value="uso">Ordenar por Uso</option>
+                <option value="data">Ordenar por Data</option>
+            </select>
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bi bi-x-circle me-1"></i>Limpar
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="row" id="tagsContainer">
+        @foreach (var tag in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-3 tag-card"
+                 data-nome="@tag.Nome.ToLower()"
+                 data-uso="@(tag.PostTags?.Count ?? 0)"
+                 data-data="@tag.DataCriacao.Ticks">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                <span class="badge bg-primary">#@tag.Nome</span>
+                            </h5>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Details" asp-route-id="@tag.Id">
+                                            <i class="bi bi-eye me-2"></i>Visualizar
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-action="Edit" asp-route-id="@tag.Id">
+                                            <i class="bi bi-pencil me-2"></i>Editar
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger"
+                                                onclick="confirmDelete('@tag.Id', '@tag.Nome')">
+                                            <i class="bi bi-trash me-2"></i>Excluir
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <code>@tag.Slug</code>
+                            </small>
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-info">
+                                @(tag.PostTags?.Count ?? 0) posts
+                            </span>
+                            <small class="text-muted">
+                                @tag.DataCriacao.ToString("dd/MM/yyyy")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-hash display-1 text-muted"></i>
+        <h3 class="mt-3">Nenhuma tag encontrada</h3>
+        <p class="text-muted">Comece criando sua primeira tag.</p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>
+            Criar Primeira Tag
+        </a>
+    </div>
+}
+
+<!-- Modal para Criação em Lote -->
+<div class="modal fade" id="bulkCreateModal" tabindex="-1" aria-labelledby="bulkCreateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkCreateModalLabel">
+                    <i class="bi bi-plus-square me-2"></i>
+                    Criar Múltiplas Tags
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="BulkCreate" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="bulkTags" class="form-label">Tags (separadas por vírgula)</label>
+                        <textarea class="form-control" id="bulkTags" name="TagNames" rows="4"
+                                  placeholder="tecnologia, programação, web, mobile, design"></textarea>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Digite as tags separadas por vírgula. Espaços serão removidos automaticamente.
+                        </div>
+                    </div>
+                    <div id="previewTags" class="mb-3" style="display: none;">
+                        <label class="form-label">Preview das tags:</label>
+                        <div id="tagsPreview"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Criar Tags
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a tag <strong id="tagName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atenção:</strong> Esta ação não pode ser desfeita. A tag será removida de todos os posts.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        Excluir Tag
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Busca em tempo real
+        document.getElementById('searchInput').addEventListener('input', function() {
+            filterTags();
+        });
+
+        document.getElementById('sortFilter').addEventListener('change', function() {
+            sortTags();
+        });
+
+        function filterTags() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.tag-card');
+
+            cards.forEach(card => {
+                const nome = card.dataset.nome;
+                card.style.display = nome.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        function sortTags() {
+            const sortBy = document.getElementById('sortFilter').value;
+            const container = document.getElementById('tagsContainer');
+            const cards = Array.from(container.children);
+
+            cards.sort((a, b) => {
+                switch(sortBy) {
+                    case 'nome':
+                        return a.dataset.nome.localeCompare(b.dataset.nome);
+                    case 'uso':
+                        return parseInt(b.dataset.uso) - parseInt(a.dataset.uso);
+                    case 'data':
+                        return parseInt(b.dataset.data) - parseInt(a.dataset.data);
+                    default:
+                        return 0;
+                }
+            });
+
+            cards.forEach(card => container.appendChild(card));
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('sortFilter').value = 'nome';
+            filterTags();
+            sortTags();
+        }
+
+        function confirmDelete(id, nome) {
+            document.getElementById('tagName').textContent = nome;
+            document.getElementById('deleteForm').action = '/Admin/Tags/Delete/' + id;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        // Preview das tags em lote
+        document.getElementById('bulkTags').addEventListener('input', function() {
+            const text = this.value;
+            const preview = document.getElementById('previewTags');
+            const container = document.getElementById('tagsPreview');
+
+            if (text.trim()) {
+                const tags = text.split(',').map(tag => tag.trim()).filter(tag => tag);
+                container.innerHTML = tags.map(tag =>
+                    `<span class="badge bg-primary me-1 mb-1">#${tag}</span>`
+                ).join('');
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    </script>
+}

@@ -1,0 +1,229 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<FCAMM.Core.Models.CategoriaModel>
+
+@{
+    ViewData["Title"] = "Gerenciar Categorias";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/Admin", IsActive = false },
+        new { Text = "Categorias", Url = "", IsActive = true }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-tags me-2 text-primary"></i>
+            Gerenciar Categorias
+        </h1>
+        <p class="text-muted mb-0">Administre as categorias do blog</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>
+        Nova Categoria
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="searchInput" placeholder="Buscar categorias...">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex gap-2">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos os status</option>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+            </select>
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="bi bi-x-circle me-1"></i>Limpar
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="categoriasTable">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Slug</th>
+                        <th>Descrição</th>
+                        <th>Status</th>
+                        <th>Posts</th>
+                        <th>Criado em</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var categoria in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="badge bg-primary rounded-pill me-2" style="width: 12px; height: 12px;"></div>
+                                    <strong>@categoria.Nome</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <code class="text-muted">@categoria.Slug</code>
+                            </td>
+                            <td>
+                                    <span class="text-truncate d-inline-block" style="max-width: 200px;" title="@categoria.Descricao">
+                                        @(categoria.Descricao ?? "Sem descrição")
+                                    </span>
+                            </td>
+                            <td>
+                                @if (categoria.Ativo)
+                                {
+                                    <span class="badge bg-success">
+                                            <i class="bi bi-check-circle me-1"></i>Ativo
+                                        </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">
+                                            <i class="bi bi-x-circle me-1"></i>Inativo
+                                        </span>
+                                }
+                            </td>
+                            <td>
+                                    <span class="badge bg-info">
+                                        @(categoria.Posts?.Count ?? 0) posts
+                                    </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    @categoria.DataCriacao.ToString("dd/MM/yyyy")
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a asp-action="Details" asp-route-id="@categoria.Id"
+                                       class="btn btn-outline-info" title="Visualizar">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@categoria.Id"
+                                       class="btn btn-outline-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger"
+                                            onclick="confirmDelete('@categoria.Id', '@categoria.Nome')" title="Excluir">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <i class="bi bi-tags display-1 text-muted"></i>
+        <h3 class="mt-3">Nenhuma categoria encontrada</h3>
+        <p class="text-muted">Comece criando sua primeira categoria.</p>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>
+            Criar Primeira Categoria
+        </a>
+    </div>
+}
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Confirmar Exclusão
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a categoria <strong id="categoriaName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atenção:</strong> Esta ação não pode ser desfeita. Todos os posts desta categoria serão movidos para "Sem Categoria".
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i>
+                        Excluir Categoria
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Busca em tempo real
+        document.getElementById('searchInput').addEventListener('input', function() {
+            filterTable();
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            filterTable();
+        });
+
+        function filterTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#categoriasTable tbody tr');
+
+            rows.forEach(row => {
+                const nome = row.cells[0].textContent.toLowerCase();
+                const slug = row.cells[1].textContent.toLowerCase();
+                const descricao = row.cells[2].textContent.toLowerCase();
+                const status = row.cells[3].textContent.toLowerCase();
+
+                const matchesSearch = nome.includes(searchTerm) ||
+                    slug.includes(searchTerm) ||
+                    descricao.includes(searchTerm);
+
+                const matchesStatus = !statusFilter || status.includes(statusFilter);
+
+                row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            filterTable();
+        }
+
+        function confirmDelete(id, nome) {
+            document.getElementById('categoriaName').textContent = nome;
+            document.getElementById('deleteForm').action = '/Admin/Categorias/Delete/' + id;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        // Tooltip
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+}
