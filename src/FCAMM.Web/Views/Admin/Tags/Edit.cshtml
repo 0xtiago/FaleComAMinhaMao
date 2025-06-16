@@ -1,0 +1,332 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model FCAMM.Web.ViewModels.Tag.EditarTagViewModel
+
+@{
+    ViewData["Title"] = $"Editar #{Model.Nome}";
+}
+
+<!-- Breadcrumb Manual -->
+<nav aria-label="breadcrumb" class="bg-light py-2 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin">
+                    <i class="bi bi-house me-1"></i>Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/tags">Tags</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Editar #@Model.Nome</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Editar Tag: #@Model.Nome
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post" id="tagForm">
+                    <input asp-for="Id" type="hidden">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nome" class="form-label">
+                                <i class="bi bi-hash me-1"></i>@Html.DisplayNameFor(m => m.Nome)
+                            </label>
+                            <input asp-for="Nome" class="form-control" id="nomeInput" autofocus maxlength="50">
+                            <div class="form-text">
+                                <span id="charCount">@Model.Nome.Length</span>/50 caracteres
+                            </div>
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Slug" class="form-label">
+                                <i class="bi bi-link me-1"></i>@Html.DisplayNameFor(m => m.Slug)
+                            </label>
+                            <input asp-for="Slug" class="form-control" id="slugInput" maxlength="100">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                URL atual: <span id="urlPreview" class="text-primary">/tags/@Model.Slug</span>
+                            </div>
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview da Tag -->
+                    <div class="mb-4">
+                        <label class="form-label">Preview da Tag</label>
+                        <div class="p-3 bg-light rounded border d-flex align-items-center gap-3">
+                            <div>
+                                <span class="badge bg-primary fs-5" id="tagPreview">#@Model.Nome</span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted">URL:</small>
+                                    <code id="urlPreview2">/tags/@Model.Slug</code>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-1">
+                                    <small class="text-muted">Slug:</small>
+                                    <code id="slugPreview2">@Model.Slug</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Validação em Tempo Real -->
+                    <div id="validationFeedback" class="mb-3" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="validationMessage"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Atenção:</strong> Alterar o nome ou slug pode afetar URLs existentes e filtros de posts.
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning" id="submitBtn">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Salvar Alterações
+                        </button>
+                        <a href="/admin/tags/detalhes/@Model.Id" class="btn btn-info">
+                            <i class="bi bi-eye me-1"></i>
+                            Visualizar
+                        </a>
+                        <a href="/admin/tags" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Card com Comparação -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-arrow-left-right me-2"></i>
+                    Comparação de Mudanças
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Valores Atuais</h6>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="mb-2">
+                                <strong>Nome:</strong> <span class="badge bg-secondary">#@Model.Nome</span>
+                            </div>
+                            <div>
+                                <strong>Slug:</strong> <code>@Model.Slug</code>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Novos Valores</h6>
+                        <div class="border rounded p-3 bg-primary bg-opacity-10">
+                            <div class="mb-2">
+                                <strong>Nome:</strong> <span class="badge bg-primary" id="novoNome">#@Model.Nome</span>
+                            </div>
+                            <div>
+                                <strong>Slug:</strong> <code id="novoSlug">@Model.Slug</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card com Dicas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    Dicas para Edição de Tags
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success">✅ Boas Práticas</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-1">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Use nomes concisos e descritivos
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Mantenha consistência com tags existentes
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Prefira singular ao plural
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-check-circle text-success me-2"></i>
+                                Use apenas letras minúsculas
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger">❌ Evite</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-1">
+                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                Caracteres especiais (!@@#$%)
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                Espaços (use hífens)
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                Acentos ou cedilhas
+                            </li>
+                            <li class="mb-1">
+                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                Nomes muito longos (>50 chars)
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const originalNome = '@Model.Nome';
+        const originalSlug = '@Model.Slug';
+        
+        document.getElementById('nomeInput').addEventListener('input', function() {
+            updatePreview();
+            updateCharCount();
+            validateInput();
+            
+            // Se o nome mudou, gerar novo slug automaticamente
+            if (this.value !== originalNome) {
+                const newSlug = generateSlug(this.value);
+                document.getElementById('slugInput').value = newSlug;
+                updateUrls();
+            }
+        });
+
+        document.getElementById('slugInput').addEventListener('input', function() {
+            updateUrls();
+            updatePreview();
+            validateInput();
+        });
+
+        function updatePreview() {
+            const nome = document.getElementById('nomeInput').value.trim() || originalNome;
+            const slug = document.getElementById('slugInput').value.trim() || originalSlug;
+            
+            document.getElementById('tagPreview').textContent = '#' + nome;
+            document.getElementById('novoNome').textContent = '#' + nome;
+            document.getElementById('novoSlug').textContent = slug;
+            document.getElementById('slugPreview2').textContent = slug;
+        }
+
+        function updateUrls() {
+            const slug = document.getElementById('slugInput').value || originalSlug;
+            document.getElementById('urlPreview').textContent = '/tags/' + slug;
+            document.getElementById('urlPreview2').textContent = '/tags/' + slug;
+        }
+
+        function updateCharCount() {
+            const nome = document.getElementById('nomeInput').value;
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = nome.length;
+            
+            if (nome.length > 40) {
+                charCount.className = 'text-warning';
+            } else if (nome.length >= 50) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = '';
+            }
+        }
+
+        function validateInput() {
+            const nome = document.getElementById('nomeInput').value.trim();
+            const slug = document.getElementById('slugInput').value.trim();
+            const feedback = document.getElementById('validationFeedback');
+            const message = document.getElementById('validationMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            let isValid = true;
+            let errorMessage = '';
+            
+            if (nome.length === 0) {
+                isValid = false;
+                errorMessage = 'O nome da tag é obrigatório.';
+            } else if (nome.length > 50) {
+                isValid = false;
+                errorMessage = 'O nome da tag não pode ter mais de 50 caracteres.';
+            } else if (slug.length === 0) {
+                isValid = false;
+                errorMessage = 'O slug é obrigatório.';
+            } else if (!/^[a-z0-9-]+$/.test(slug)) {
+                isValid = false;
+                errorMessage = 'O slug deve conter apenas letras minúsculas, números e hífens.';
+            }
+            
+            if (!isValid) {
+                feedback.style.display = 'block';
+                message.textContent = errorMessage;
+                submitBtn.disabled = true;
+            } else {
+                feedback.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "");
+        }
+
+        // Validação do formulário
+        document.getElementById('tagForm').addEventListener('submit', function(e) {
+            const nome = document.getElementById('nomeInput').value.trim();
+            const slug = document.getElementById('slugInput').value.trim();
+            
+            if (!nome || !slug) {
+                e.preventDefault();
+                alert('Nome e slug são obrigatórios!');
+                return false;
+            }
+            
+            if (!/^[a-z0-9-]+$/.test(slug)) {
+                e.preventDefault();
+                alert('O slug deve conter apenas letras minúsculas, números e hífens!');
+                document.getElementById('slugInput').focus();
+                return false;
+            }
+        });
+
+        // Inicializar
+        updateCharCount();
+        updatePreview();
+        validateInput();
+    </script>
+}

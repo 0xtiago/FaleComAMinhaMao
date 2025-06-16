@@ -1,0 +1,279 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model FCAMM.Web.ViewModels.Categoria.EditarCategoriaViewModel
+
+@{
+    ViewData["Title"] = $"Editar {Model.Nome}";
+}
+
+<!-- Breadcrumb Manual -->
+<nav aria-label="breadcrumb" class="bg-light py-2 mb-4">
+    <div class="container">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/admin">
+                    <i class="bi bi-house me-1"></i>Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/admin/categorias">Categorias</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Editar @Model.Nome</li>
+        </ol>
+    </div>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-pencil me-2"></i>
+                    Editar Categoria: @Model.Nome
+                </h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post" id="categoriaForm">
+                    <input asp-for="Id" type="hidden">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Nome" class="form-label">
+                                <i class="bi bi-tag me-1"></i>@Html.DisplayNameFor(m => m.Nome)
+                            </label>
+                            <input asp-for="Nome" class="form-control" id="nomeInput" autofocus>
+                            <span asp-validation-for="Nome" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Slug" class="form-label">
+                                <i class="bi bi-link me-1"></i>@Html.DisplayNameFor(m => m.Slug)
+                            </label>
+                            <input asp-for="Slug" class="form-control" id="slugInput">
+                            <div class="form-text">
+                                <i class="bi bi-info-circle me-1"></i>
+                                URL atual: <span id="urlPreview" class="text-primary">/categorias/@Model.Slug</span>
+                            </div>
+                            <span asp-validation-for="Slug" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Descricao" class="form-label">
+                            <i class="bi bi-text-paragraph me-1"></i>@Html.DisplayNameFor(m => m.Descricao)
+                        </label>
+                        <textarea asp-for="Descricao" class="form-control" rows="3" maxlength="500"></textarea>
+                        <div class="form-text">
+                            <span id="charCount">@(Model.Descricao?.Length ?? 0)</span>/500 caracteres
+                        </div>
+                        <span asp-validation-for="Descricao" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input asp-for="Ativo" class="form-check-input" type="checkbox">
+                            <label asp-for="Ativo" class="form-check-label">
+                                <i class="bi bi-check-circle me-1"></i>@Html.DisplayNameFor(m => m.Ativo)
+                            </label>
+                            <div class="form-text">Categorias inativas não aparecem para os usuários</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview da Categoria -->
+                    <div class="card bg-light mb-4" id="previewCard">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="bi bi-eye me-1"></i>Preview da Categoria
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="badge bg-primary rounded-pill me-2" style="width: 12px; height: 12px;"></div>
+                                <strong id="previewNome">@Model.Nome</strong>
+                                <span class="badge ms-2" id="previewStatus">
+                                    @if (Model.Ativo)
+                                    {
+                                        <span class="badge bg-success">Ativo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Inativo</span>
+                                    }
+                                </span>
+                            </div>
+                            <p class="text-muted mb-1">
+                                <code id="previewSlug">@Model.Slug</code>
+                            </p>
+                            <p class="mb-0" id="previewDescricao">@(Model.Descricao ?? "Sem descrição")</p>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Atenção:</strong> Alterar o nome ou slug pode afetar URLs existentes e links externos.
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Salvar Alterações
+                        </button>
+                        <a href="/admin/categorias/detalhes/@Model.Id" class="btn btn-info">
+                            <i class="bi bi-eye me-1"></i>
+                            Visualizar
+                        </a>
+                        <a href="/admin/categorias" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Card com Histórico de Alterações -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Dicas para Edição
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        <strong>Nome:</strong> Alterar o nome gerará automaticamente um novo slug
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        <strong>Slug:</strong> Pode ser editado manualmente, mas deve seguir o padrão URL-friendly
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        <strong>Status:</strong> Categorias inativas ficam ocultas mas mantêm os posts
+                    </li>
+                    <li class="mb-0">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        <strong>SEO:</strong> Mudanças no slug podem afetar o posicionamento nos motores de busca
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const originalNome = '@Model.Nome';
+        const originalSlug = '@Model.Slug';
+        
+        document.getElementById('nomeInput').addEventListener('input', function() {
+            updatePreview();
+            
+            // Se o nome mudou, gerar novo slug automaticamente
+            if (this.value !== originalNome) {
+                const newSlug = generateSlug(this.value);
+                document.getElementById('slugInput').value = newSlug;
+                updateUrlPreview();
+            }
+        });
+
+        document.getElementById('slugInput').addEventListener('input', function() {
+            updateUrlPreview();
+            updatePreview();
+        });
+
+        document.getElementById('Descricao').addEventListener('input', function() {
+            updateCharCount();
+            updatePreview();
+        });
+
+        document.getElementById('Ativo').addEventListener('change', function() {
+            updatePreview();
+        });
+
+        function updatePreview() {
+            const nome = document.getElementById('nomeInput').value.trim() || originalNome;
+            const slug = document.getElementById('slugInput').value.trim() || originalSlug;
+            const descricao = document.getElementById('Descricao').value.trim();
+            const ativo = document.getElementById('Ativo').checked;
+            
+            document.getElementById('previewNome').textContent = nome;
+            document.getElementById('previewSlug').textContent = slug;
+            document.getElementById('previewDescricao').textContent = descricao || 'Sem descrição';
+            
+            const statusBadge = document.getElementById('previewStatus');
+            if (ativo) {
+                statusBadge.className = 'badge bg-success ms-2';
+                statusBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i>Ativo';
+            } else {
+                statusBadge.className = 'badge bg-danger ms-2';
+                statusBadge.innerHTML = '<i class="bi bi-x-circle me-1"></i>Inativo';
+            }
+        }
+
+        function updateUrlPreview() {
+            const slug = document.getElementById('slugInput').value || originalSlug;
+            document.getElementById('urlPreview').textContent = '/categorias/' + slug;
+        }
+
+        function updateCharCount() {
+            const descricao = document.getElementById('Descricao').value;
+            const charCount = document.getElementById('charCount');
+            charCount.textContent = descricao.length;
+            
+            if (descricao.length > 450) {
+                charCount.className = 'text-warning';
+            } else if (descricao.length >= 500) {
+                charCount.className = 'text-danger';
+            } else {
+                charCount.className = '';
+            }
+        }
+
+        function generateSlug(text) {
+            return text
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9\s-]/g, "")
+                .replace(/\s+/g, "-")
+                .replace(/-+/g, "-")
+                .replace(/^-|-$/g, "");
+        }
+
+        // Validação do formulário
+        document.getElementById('categoriaForm').addEventListener('submit', function(e) {
+            const nome = document.getElementById('nomeInput').value.trim();
+            const slug = document.getElementById('slugInput').value.trim();
+            
+            if (!nome) {
+                e.preventDefault();
+                alert('O nome da categoria é obrigatório!');
+                document.getElementById('nomeInput').focus();
+                return false;
+            }
+            
+            if (!slug) {
+                e.preventDefault();
+                alert('O slug é obrigatório!');
+                document.getElementById('slugInput').focus();
+                return false;
+            }
+            
+            // Validar formato do slug
+            const validSlug = /^[a-z0-9-]+$/;
+            if (!validSlug.test(slug)) {
+                e.preventDefault();
+                alert('O slug deve conter apenas letras minúsculas, números e hífens!');
+                document.getElementById('slugInput').focus();
+                return false;
+            }
+        });
+
+        // Inicializar
+        updateCharCount();
+        updatePreview();
+    </script>
+}
