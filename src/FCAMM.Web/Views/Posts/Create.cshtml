@@ -1,0 +1,569 @@
+@model FCAMM.Web.ViewModels.Post.CriarPostViewModel
+
+@{
+    ViewData["Title"] = "Criar Novo Post";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Meus Posts", Url = "/posts/meus", IsActive = false },
+        new { Text = "Criar Post", Url = "", IsActive = true }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-plus-circle me-2"></i>Criar Novo Post</h2>
+        <p class="text-muted mb-0">Compartilhe suas ideias e conhecimento com a comunidade</p>
+    </div>
+    <a asp-action="MeusPosts" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Voltar aos Meus Posts
+    </a>
+</div>
+
+<form asp-action="Create" method="post" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Informações Básicas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Conteúdo do Post</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Título -->
+                    <div class="mb-3">
+                        <label asp-for="Titulo" class="form-label required"></label>
+                        <input asp-for="Titulo" class="form-control" placeholder="Digite um título atrativo para seu post..." maxlength="200" />
+                        <span asp-validation-for="Titulo" class="text-danger"></span>
+                        <div class="form-text">
+                            <span id="titulo-counter">0</span>/200 caracteres
+                        </div>
+                    </div>
+
+                    <!-- Resumo -->
+                    <div class="mb-3">
+                        <label asp-for="Resumo" class="form-label"></label>
+                        <textarea asp-for="Resumo" class="form-control" rows="3" placeholder="Breve descrição do que o leitor vai encontrar (ajuda no SEO)..." maxlength="300"></textarea>
+                        <span asp-validation-for="Resumo" class="text-danger"></span>
+                        <div class="form-text">
+                            <span id="resumo-counter">0</span>/300 caracteres • Opcional, mas recomendado
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo -->
+                    <div class="mb-3">
+                        <label asp-for="Conteudo" class="form-label required"></label>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted">Use Markdown para formatação</small>
+                            <button type="button" class="btn btn-sm btn-outline-info" onclick="togglePreview()">
+                                <i class="bi bi-eye me-1"></i>Preview
+                            </button>
+                        </div>
+                        <textarea asp-for="Conteudo" class="form-control" rows="18" placeholder="Escreva o conteúdo do seu post aqui...
+
+**Dicas de Markdown:**
+- Use **texto** para negrito
+- Use *texto* para itálico  
+- Use # Título para cabeçalhos
+- Use [link](url) para links
+- Use - item para listas"></textarea>
+                        <span asp-validation-for="Conteudo" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview (oculto inicialmente) -->
+            <div class="card mb-4" id="preview-card" style="display: none;">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-eye me-2"></i>Preview do Post</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="togglePreview()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="preview-content" class="border rounded p-3 bg-light"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Status de Publicação -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-send me-2"></i>Publicação</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="@((int)FCAMM.Core.Enums.StatusPostEnum.Rascunho)">
+                                Salvar como Rascunho
+                            </option>
+                            <option value="@((int)FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao)">
+                                Enviar para Aprovação
+                            </option>
+                        </select>
+                        <span asp-validation-for="Status" class="text-danger"></span>
+                        <div class="form-text">
+                            <small>
+                                <strong>Rascunho:</strong> Você pode editar a qualquer momento<br>
+                                <strong>Aprovação:</strong> Será enviado para moderação
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Data de Publicação (apenas para Admin/Moderador) -->
+                    @if (User.IsInRole("Admin") || User.IsInRole("Moderador"))
+                    {
+                        <div class="mb-3">
+                            <label asp-for="DataPublicacao" class="form-label"></label>
+                            <input asp-for="DataPublicacao" type="datetime-local" class="form-control" />
+                            <span asp-validation-for="DataPublicacao" class="text-danger"></span>
+                            <div class="form-text">
+                                Deixe em branco para publicar imediatamente
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Categoria e Tags -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-tags me-2"></i>Categorização</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Categoria -->
+                    <div class="mb-3">
+                        <label asp-for="CategoriaId" class="form-label required"></label>
+                        <select asp-for="CategoriaId" class="form-select">
+                            <option value="">Selecione uma categoria</option>
+                            @if (ViewBag.Categorias != null)
+                            {
+                                @foreach (var categoria in (IEnumerable<FCAMM.Core.Models.CategoriaModel>)ViewBag.Categorias)
+                                {
+                                    <option value="@categoria.Id">@categoria.Nome</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="CategoriaId" class="text-danger"></span>
+                        <div class="form-text">A categoria ajuda os leitores a encontrar seu post</div>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="mb-3">
+                        <label class="form-label">Tags</label>
+                        <div class="form-text mb-2">Escolha tags relacionadas ao seu post:</div>
+
+                        @if (ViewBag.Tags != null)
+                        {
+                            <div class="tags-container" style="max-height: 200px; overflow-y: auto; border: 1px solid #dee2e6; padding: 10px; border-radius: 0.375rem;">
+                                @foreach (var tag in (IEnumerable<FCAMM.Core.Models.TagModel>)ViewBag.Tags)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="TagIds" value="@tag.Id" id="tag_@tag.Id">
+                                        <label class="form-check-label" for="tag_@tag.Id">
+                                            @tag.Nome
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <span id="tags-selected">0</span> tags selecionadas
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-1"></i>Criar Post
+                        </button>
+
+                        <button type="button" class="btn btn-outline-secondary" onclick="salvarRascunho()">
+                            <i class="bi bi-save me-1"></i>Salvar como Rascunho
+                        </button>
+
+                        <a asp-action="MeusPosts" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle me-1"></i>Cancelar
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guia de Markdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-question-circle me-2"></i>Guia Rápido - Markdown</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <div class="mb-2">
+                            <code>**texto**</code> → <strong>negrito</strong>
+                        </div>
+                        <div class="mb-2">
+                            <code>*texto*</code> → <em>itálico</em>
+                        </div>
+                        <div class="mb-2">
+                            <code># Título</code> → <strong>Cabeçalho</strong>
+                        </div>
+                        <div class="mb-2">
+                            <code>[link](url)</code> → Link
+                        </div>
+                        <div class="mb-2">
+                            <code>- item</code> → Lista
+                        </div>
+                        <div class="mb-2">
+                            <code>`código`</code> → <code>código</code>
+                        </div>
+                        <div class="mb-2">
+                            <code>```<br>bloco de código<br>```</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Contadores de caracteres
+            updateCharCounter('#Titulo', '#titulo-counter', 200);
+            updateCharCounter('#Resumo', '#resumo-counter', 300);
+
+            $('#Titulo, #Resumo').on('input', function() {
+                const target = $(this).attr('id');
+                const counterId = target === 'Titulo' ? '#titulo-counter' : '#resumo-counter';
+                const maxLength = target === 'Titulo' ? 200 : 300;
+                updateCharCounter('#' + target, counterId, maxLength);
+            });
+
+            // Contador de tags selecionadas
+            updateTagsCounter();
+            $('input[name="TagIds"]').change(function() {
+                updateTagsCounter();
+            });
+
+            // Auto-save (opcional)
+            setInterval(function() {
+                autoSave();
+            }, 30000); // Auto-save a cada 30 segundos
+
+            // Validação antes do submit
+            $('form').submit(function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            // Carregar dados salvos
+            loadFromAutoSave();
+        });
+
+        function updateCharCounter(inputSelector, counterSelector, maxLength) {
+            const currentLength = $(inputSelector).val().length;
+            $(counterSelector).text(currentLength);
+
+            if (currentLength > maxLength * 0.9) {
+                $(counterSelector).addClass('text-warning');
+            } else {
+                $(counterSelector).removeClass('text-warning');
+            }
+
+            if (currentLength === maxLength) {
+                $(counterSelector).addClass('text-danger').removeClass('text-warning');
+            } else {
+                $(counterSelector).removeClass('text-danger');
+            }
+        }
+
+        function updateTagsCounter() {
+            const selectedTags = $('input[name="TagIds"]:checked').length;
+            $('#tags-selected').text(selectedTags);
+        }
+
+        function togglePreview() {
+            const previewCard = $('#preview-card');
+            const content = $('#Conteudo').val();
+
+            if (previewCard.is(':visible')) {
+                previewCard.hide();
+            } else {
+                if (content.trim()) {
+                    try {
+                        const htmlContent = marked.parse(content);
+                        $('#preview-content').html(htmlContent);
+                        previewCard.show();
+
+                        // Scroll para o preview
+                        $('html, body').animate({
+                            scrollTop: previewCard.offset().top - 100
+                        }, 500);
+                    } catch (e) {
+                        console.error('Erro ao processar Markdown:', e);
+                        $('#preview-content').html('<div class="alert alert-warning">Erro ao processar o Markdown. Verifique a sintaxe.</div>');
+                        previewCard.show();
+                    }
+                } else {
+                    showToast('Digite algum conteúdo para visualizar o preview.', 'warning');
+                }
+            }
+        }
+
+        function salvarRascunho() {
+            // Alterar status para rascunho e submeter
+            $('#Status').val('0'); // StatusPostEnum.Rascunho = 0
+
+            if (validateForm()) {
+                $('form').submit();
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            const errors = [];
+
+            // Validar título
+            const titulo = $('#Titulo').val().trim();
+            if (!titulo) {
+                errors.push('Título é obrigatório');
+                $('#Titulo').addClass('is-invalid');
+                isValid = false;
+            } else if (titulo.length > 200) {
+                errors.push('Título deve ter no máximo 200 caracteres');
+                $('#Titulo').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#Titulo').removeClass('is-invalid');
+            }
+
+            // Validar conteúdo
+            const conteudo = $('#Conteudo').val().trim();
+            if (!conteudo) {
+                errors.push('Conteúdo é obrigatório');
+                $('#Conteudo').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#Conteudo').removeClass('is-invalid');
+            }
+
+            // Validar categoria
+            const categoria = $('#CategoriaId').val();
+            if (!categoria) {
+                errors.push('Categoria é obrigatória');
+                $('#CategoriaId').addClass('is-invalid');
+                isValid = false;
+            } else {
+                $('#CategoriaId').removeClass('is-invalid');
+            }
+
+            if (!isValid) {
+                // Mostrar erros
+                let errorMessage = 'Por favor, corrija os seguintes erros:\n\n';
+                errors.forEach(error => {
+                    errorMessage += '• ' + error + '\n';
+                });
+                showToast(errorMessage, 'error');
+            }
+
+            return isValid;
+        }
+
+        // Auto-save
+        function autoSave() {
+            const formData = {
+                titulo: $('#Titulo').val(),
+                resumo: $('#Resumo').val(),
+                conteudo: $('#Conteudo').val(),
+                categoriaId: $('#CategoriaId').val(),
+                tagIds: $('input[name="TagIds"]:checked').map(function() {
+                    return $(this).val();
+                }).get(),
+                status: $('#Status').val(),
+                timestamp: new Date().toISOString()
+            };
+
+            // Salvar apenas se houver conteúdo
+            if (formData.titulo.trim() || formData.conteudo.trim()) {
+                try {
+                    localStorage.setItem('fcamm_new_post_draft', JSON.stringify(formData));
+                    showAutoSaveIndicator();
+                } catch (e) {
+                    console.error('Erro ao salvar rascunho:', e);
+                }
+            }
+        }
+
+        function loadFromAutoSave() {
+            const savedData = localStorage.getItem('fcamm_new_post_draft');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+
+                    // Verificar se os dados não são muito antigos (1 dia)
+                    const savedTime = new Date(data.timestamp);
+                    const now = new Date();
+                    const diffHours = (now - savedTime) / (1000 * 60 * 60);
+
+                    if (diffHours < 24 && (data.titulo || data.conteudo)) {
+                        if (confirm('Encontramos um rascunho salvo automaticamente. Deseja carregá-lo?')) {
+                            $('#Titulo').val(data.titulo || '');
+                            $('#Resumo').val(data.resumo || '');
+                            $('#Conteudo').val(data.conteudo || '');
+                            $('#CategoriaId').val(data.categoriaId || '');
+                            $('#Status').val(data.status || '0');
+
+                            // Carregar tags selecionadas
+                            if (data.tagIds && data.tagIds.length > 0) {
+                                data.tagIds.forEach(tagId => {
+                                    $('input[name="TagIds"][value="' + tagId + '"]').prop('checked', true);
+                                });
+                            }
+
+                            // Atualizar contadores
+                            updateCharCounter('#Titulo', '#titulo-counter', 200);
+                            updateCharCounter('#Resumo', '#resumo-counter', 300);
+                            updateTagsCounter();
+
+                            showToast('Rascunho carregado com sucesso!', 'success');
+                        } else {
+                            localStorage.removeItem('fcamm_new_post_draft');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar dados salvos:', e);
+                    localStorage.removeItem('fcamm_new_post_draft');
+                }
+            }
+        }
+
+        function showAutoSaveIndicator() {
+            // Remover indicador existente
+            $('#auto-save-indicator').remove();
+
+            // Criar novo indicador
+            const indicator = $('<div id="auto-save-indicator" class="position-fixed bottom-0 start-0 m-3 alert alert-success alert-dismissible fade show" role="alert" style="z-index: 1050; max-width: 300px;">' +
+                '<i class="bi bi-check-circle me-2"></i>Rascunho salvo automaticamente' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                '</div>');
+
+            $('body').append(indicator);
+
+            // Auto-hide após 3 segundos
+            setTimeout(() => {
+                indicator.fadeOut(500, function() {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+
+        function showToast(message, type) {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+
+            const alertClass = type === 'success' ? 'alert-success' :
+                type === 'warning' ? 'alert-warning' : 'alert-danger';
+            const icon = type === 'success' ? 'bi-check-circle' :
+                type === 'warning' ? 'bi-exclamation-triangle' : 'bi-x-circle';
+
+            toastContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="bi ${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+
+            document.body.appendChild(toastContainer);
+
+            setTimeout(() => {
+                toastContainer.remove();
+            }, 5000);
+        }
+
+        // Limpar auto-save quando o form for submetido com sucesso
+        $('form').on('submit', function() {
+            // Limpar depois de um tempo para garantir que o submit foi bem-sucedido
+            setTimeout(() => {
+                localStorage.removeItem('fcamm_new_post_draft');
+            }, 2000);
+        });
+
+        // Atalhos de teclado
+        $(document).keydown(function(e) {
+            // Ctrl+S para salvar como rascunho
+            if (e.ctrlKey && e.keyCode === 83) {
+                e.preventDefault();
+                salvarRascunho();
+                return false;
+            }
+
+            // Ctrl+Enter para preview
+            if (e.ctrlKey && e.keyCode === 13) {
+                e.preventDefault();
+                togglePreview();
+                return false;
+            }
+        });
+
+        // Aviso antes de sair da página com dados não salvos
+        let formChanged = false;
+        $('#Titulo, #Resumo, #Conteudo, #CategoriaId, #Status, input[name="TagIds"]').on('input change', function() {
+            formChanged = true;
+        });
+
+        $(window).on('beforeunload', function(e) {
+            if (formChanged && ($('#Titulo').val().trim() || $('#Conteudo').val().trim())) {
+                return 'Você tem alterações não salvas. Deseja realmente sair?';
+            }
+        });
+
+        // Remover aviso quando o form for submetido
+        $('form').submit(function() {
+            formChanged = false;
+        });
+
+        // Melhorias na UX
+        $('#Status').change(function() {
+            const status = $(this).val();
+            const submitBtn = $('button[type="submit"]');
+
+            if (status === '0') { // Rascunho
+                submitBtn.html('<i class="bi bi-save me-1"></i>Salvar Rascunho');
+                submitBtn.removeClass('btn-primary').addClass('btn-secondary');
+            } else { // Aguardando Aprovação
+                submitBtn.html('<i class="bi bi-send me-1"></i>Enviar para Aprovação');
+                submitBtn.removeClass('btn-secondary').addClass('btn-primary');
+            }
+        });
+
+        // Trigger inicial para o botão
+        $('#Status').trigger('change');
+
+        // Adicionar sugestões de títulos baseadas na categoria
+        $('#CategoriaId').change(function() {
+            const categoriaText = $(this).find('option:selected').text();
+            if (categoriaText && categoriaText !== 'Selecione uma categoria') {
+                // Mostrar dicas específicas da categoria (opcional)
+                console.log('Categoria selecionada:', categoriaText);
+            }
+        });
+    </script>
+}

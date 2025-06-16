@@ -1,0 +1,385 @@
+@model FCAMM.Web.ViewModels.Post.ListarPostsViewModel
+
+@{
+    ViewData["Title"] = "Moderação de Posts";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Admin", Url = "/admin", IsActive = false },
+        new { Text = "Moderação Posts", Url = "", IsActive = true }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-shield-check me-2"></i>Moderação de Posts</h2>
+        <p class="text-muted mb-0">Gerencie e modere os posts do sistema</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Statistics" class="btn btn-outline-info">
+            <i class="bi bi-graph-up me-1"></i>Estatísticas
+        </a>
+    </div>
+</div>
+
+<!-- Painel de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-text" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">@ViewBag.TotalPosts</h4>
+                <small>Total de Posts</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">@ViewBag.PostsAprovados</h4>
+                <small>Aprovados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">@ViewBag.PostsPendentes</h4>
+                <small>Aguardando Aprovação</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <i class="bi bi-x-circle" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">@ViewBag.PostsRejeitados</h4>
+                <small>Rejeitados</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <!-- Busca -->
+                <div class="col-md-3">
+                    <input type="text" class="form-control" name="busca" value="@Model.Busca"
+                           placeholder="Buscar posts...">
+                </div>
+
+                <!-- Status -->
+                <div class="col-md-2">
+                    <select class="form-select" name="status">
+                        <option value="">Todos os status</option>
+                        <option value="1" selected="@(Model.StatusFiltro == FCAMM.Core.Enums.StatusPostEnum.Rascunho)">
+                            Rascunho
+                        </option>
+                        <option value="2" selected="@(Model.StatusFiltro == FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao)">
+                            Aguardando Aprovação
+                        </option>
+                        <option value="3" selected="@(Model.StatusFiltro == FCAMM.Core.Enums.StatusPostEnum.Aprovado)">
+                            Aprovado
+                        </option>
+                        <option value="4" selected="@(Model.StatusFiltro == FCAMM.Core.Enums.StatusPostEnum.Rejeitado)">
+                            Rejeitado
+                        </option>
+                        <option value="5" selected="@(Model.StatusFiltro == FCAMM.Core.Enums.StatusPostEnum.Arquivado)">
+                            Arquivado
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Categoria -->
+                <div class="col-md-2">
+                    <select class="form-select" name="categoria">
+                        <option value="">Todas categorias</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.Id" selected="@(Model.CategoriaFiltro == categoria.Id)">
+                                @categoria.Nome
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Autor -->
+                <div class="col-md-2">
+                    <input type="text" class="form-control" name="autor" value="@Model.AutorFiltro"
+                           placeholder="Autor...">
+                </div>
+
+                <!-- Ordenação -->
+                <div class="col-md-2">
+                    <select class="form-select" name="ordenacao">
+                        <option value="data-desc" selected="@(Model.OrdenacaoFiltro == "data-desc")">Mais recentes</option>
+                        <option value="data-asc" selected="@(Model.OrdenacaoFiltro == "data-asc")">Mais antigos</option>
+                        <option value="aguardando" selected="@(Model.OrdenacaoFiltro == "aguardando")">Aguardando primeiro</option>
+                    </select>
+                </div>
+
+                <!-- Botões -->
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Posts -->
+@if (Model.Posts.Any())
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Título</th>
+                        <th>Autor</th>
+                        <th>Categoria</th>
+                        <th>Status</th>
+                        <th>Data Criação</th>
+                        <th width="150">Ações</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var post in Model.Posts)
+                    {
+                        <tr>
+                            <td>
+                                <div>
+                                    <strong>@post.Titulo</strong>
+                                    @if (!string.IsNullOrEmpty(post.Resumo))
+                                    {
+                                        <br><small class="text-muted">@post.Resumo.Substring(0, Math.Min(80, post.Resumo.Length))@(post.Resumo.Length > 80 ? "..." : "")</small>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <i class="bi bi-person-circle me-1"></i>@post.Autor.Nome
+                                    <br><small class="text-muted">@post.Autor.Email</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">@post.Categoria.Nome</span>
+                            </td>
+                            <td>
+                                @{
+                                    var statusClass = "";
+                                    var statusIcon = "";
+
+                                    switch (post.Status)
+                                    {
+                                        case FCAMM.Core.Enums.StatusPostEnum.Rascunho:
+                                            statusClass = "bg-secondary";
+                                            statusIcon = "bi-file-earmark";
+                                            break;
+                                        case FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao:
+                                            statusClass = "bg-warning text-dark";
+                                            statusIcon = "bi-clock";
+                                            break;
+                                        case FCAMM.Core.Enums.StatusPostEnum.Aprovado:
+                                            statusClass = "bg-success";
+                                            statusIcon = "bi-check-circle";
+                                            break;
+                                        case FCAMM.Core.Enums.StatusPostEnum.Rejeitado:
+                                            statusClass = "bg-danger";
+                                            statusIcon = "bi-x-circle";
+                                            break;
+                                        case FCAMM.Core.Enums.StatusPostEnum.Arquivado:
+                                            statusClass = "bg-dark";
+                                            statusIcon = "bi-archive";
+                                            break;
+                                        default:
+                                            statusClass = "bg-secondary";
+                                            statusIcon = "bi-question";
+                                            break;
+                                    }
+                                }
+                                <span class="badge @statusClass">
+                                        <i class="bi @statusIcon me-1"></i>@post.Status
+                                    </span>
+
+                                @if (post.Status == FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao)
+                                {
+                                    <br><small class="text-muted">
+                                        @((DateTime.UtcNow - post.DataCriacao).Days) dias aguardando
+                                    </small>
+                                }
+                            </td>
+                            <td>
+                                <small>@post.DataCriacao.ToString("dd/MM/yyyy HH:mm")</small>
+                            </td>
+                            <td>
+                                <div class="btn-group-vertical w-100" role="group">
+                                    <a asp-action="Details" asp-route-id="@post.Id" class="btn btn-sm btn-outline-info mb-1">
+                                        <i class="bi bi-eye me-1"></i>Ver
+                                    </a>
+
+                                    <a asp-action="Moderate" asp-route-id="@post.Id" class="btn btn-sm btn-outline-warning mb-1">
+                                        <i class="bi bi-shield-check me-1"></i>Moderar
+                                    </a>
+
+                                    @if (post.Status == FCAMM.Core.Enums.StatusPostEnum.AguardandoAprovacao)
+                                    {
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="changeStatus(@post.Id, 3)"
+                                                    title="Aprovar">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                    onclick="changeStatus(@post.Id, 4)"
+                                                    title="Rejeitar">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav aria-label="Navegação de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @if (Model.PaginaAtual > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-busca="@Model.Busca"
+                           asp-route-status="@Model.StatusFiltro"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-autor="@Model.AutorFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@(Model.PaginaAtual - 1)">
+                            Anterior
+                        </a>
+                    </li>
+                }
+
+                @for (int i = Math.Max(1, Model.PaginaAtual - 2); i <= Math.Min(Model.TotalPaginas, Model.PaginaAtual + 2); i++)
+                {
+                    <li class="page-item @(i == Model.PaginaAtual ? "active" : "")">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-busca="@Model.Busca"
+                           asp-route-status="@Model.StatusFiltro"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-autor="@Model.AutorFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                @if (Model.PaginaAtual < Model.TotalPaginas)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index"
+                           asp-route-busca="@Model.Busca"
+                           asp-route-status="@Model.StatusFiltro"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-autor="@Model.AutorFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@(Model.PaginaAtual + 1)">
+                            Próxima
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-shield-exclamation text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-muted">Nenhum post encontrado</h4>
+            <p class="text-muted">
+                @if (string.IsNullOrEmpty(Model.Busca) && !Model.StatusFiltro.HasValue)
+                {
+                    <text>Não há posts para moderar no momento.</text>
+                }
+                else
+                {
+                    <text>Tente ajustar os filtros para encontrar posts.</text>
+                }
+            </p>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Token anti-forgery
+        function getAntiForgeryToken() {
+            return $('input[name="__RequestVerificationToken"]').val();
+        }
+
+        // Alteração de status individual
+        function changeStatus(postId, novoStatus) {
+            const statusNames = {
+                1: 'Rascunho',
+                2: 'Aguardando Aprovação',
+                3: 'Aprovado',
+                4: 'Rejeitado',
+                5: 'Arquivado'
+            };
+
+            if (confirm('Deseja alterar o status para "' + statusNames[novoStatus] + '"?')) {
+                $.post('@Url.Action("ChangeStatus")', {
+                    id: postId,
+                    novoStatus: novoStatus,
+                    __RequestVerificationToken: getAntiForgeryToken()
+                })
+                    .done(function(response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro: ' + response.message);
+                        }
+                    })
+                    .fail(function() {
+                        alert('Erro ao alterar status do post.');
+                    });
+            }
+        }
+
+        // Auto-filtrar por "Aguardando Aprovação" se não há filtros
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasFilters = urlParams.has('status') || urlParams.has('busca') ||
+                urlParams.has('categoria') || urlParams.has('autor');
+
+            // Se não há filtros, aplicar filtro padrão
+            if (!hasFilters) {
+                const statusSelect = document.querySelector('select[name="status"]');
+                if (statusSelect && statusSelect.value === '') {
+                    statusSelect.value = '2'; // Aguardando Aprovação
+                    statusSelect.closest('form').submit();
+                }
+            }
+        });
+    </script>
+}
+
+@Html.AntiForgeryToken()

@@ -34,8 +34,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" asp-controller="Textos" asp-action="Index">
-                        <i class="bi bi-file-text me-1"></i>Textos
+                    <a class="nav-link" asp-controller="Posts" asp-action="Index">
+                        <i class="bi bi-file-text me-1"></i>Posts
                     </a>
                 </li>
                 <li class="nav-item">
@@ -59,8 +59,29 @@
                     </a>
                 </li>
 
-                <!-- Dropdown Admin - Apenas para usuários com role Admin -->
-                @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
+                <!-- Dropdown para Autores logados -->
+                @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Moderador") || User.IsInRole("Autor")))
+                {
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-pencil me-1"></i>Criar
+                        </a>
+                        <div class="dropdown-menu">
+                            <h6 class="dropdown-header">
+                                <i class="bi bi-plus-circle me-2"></i>Novo Conteúdo
+                            </h6>
+                            <a class="dropdown-item" asp-controller="Posts" asp-action="Create">
+                                <i class="bi bi-file-earmark-plus me-2"></i>Novo Post
+                            </a>
+                            <a class="dropdown-item" asp-controller="Textos" asp-action="Criar">
+                                <i class="bi bi-file-text me-2"></i>Novo Texto
+                            </a>
+                        </div>
+                    </li>
+                }
+
+                <!-- Dropdown Admin - Para Admin e Moderadores -->
+                @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Moderador")))
                 {
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
@@ -68,7 +89,20 @@
                         </a>
                         <div class="dropdown-menu">
                             <h6 class="dropdown-header">
-                                <i class="bi bi-shield-check me-2"></i>Administração
+                                <i class="bi bi-shield-check me-2"></i>Moderação
+                            </h6>
+                            <a class="dropdown-item" asp-controller="PostsAdmin" asp-action="Index">
+                                <i class="bi bi-file-earmark-text me-2"></i>Moderar Posts
+                            </a>
+                            <a class="dropdown-item" asp-controller="PostsAdmin" asp-action="Statistics">
+                                <i class="bi bi-graph-up me-2"></i>Estatísticas Posts
+                            </a>
+                            <a class="dropdown-item" asp-controller="Textos" asp-action="Moderar">
+                                <i class="bi bi-file-text me-2"></i>Moderar Textos
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">
+                                <i class="bi bi-gear me-2"></i>Administração
                             </h6>
                             <a class="dropdown-item" asp-controller="Categorias" asp-action="Index">
                                 <i class="bi bi-tags me-2"></i>Gerenciar Categorias
@@ -76,19 +110,19 @@
                             <a class="dropdown-item" asp-controller="Tags" asp-action="Index">
                                 <i class="bi bi-hash me-2"></i>Gerenciar Tags
                             </a>
-                            <a class="dropdown-item" asp-controller="Admin" asp-action="Perfis">
-                                <i class="bi bi-people me-2"></i>Editar Perfis
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                            </a>
-                            <a class="dropdown-item" asp-controller="Admin" asp-action="Usuarios">
-                                <i class="bi bi-person-gear me-2"></i>Gerenciar Usuários
-                            </a>
-                            <a class="dropdown-item" asp-controller="Admin" asp-action="Textos">
-                                <i class="bi bi-file-earmark-text me-2"></i>Moderar Textos
-                            </a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                                </a>
+                                <a class="dropdown-item" asp-controller="Admin" asp-action="Usuarios">
+                                    <i class="bi bi-person-gear me-2"></i>Gerenciar Usuários
+                                </a>
+                                <a class="dropdown-item" asp-controller="Admin" asp-action="Perfis">
+                                    <i class="bi bi-people me-2"></i>Editar Perfis
+                                </a>
+                            }
                         </div>
                     </li>
                 }
@@ -112,7 +146,23 @@
                             </a>
                             <div class="dropdown-divider"></div>
                             <h6 class="dropdown-header">
-                                <i class="bi bi-file-text me-2"></i>Conteúdo
+                                <i class="bi bi-file-text me-2"></i>Meus Posts
+                            </h6>
+                            <a class="dropdown-item" asp-controller="Posts" asp-action="MeusPosts">
+                                <i class="bi bi-file-earmark-text me-2"></i>Todos os Posts
+                            </a>
+                            <a class="dropdown-item" asp-controller="Posts" asp-action="Create">
+                                <i class="bi bi-plus-circle me-2"></i>Criar Post
+                            </a>
+                            <a class="dropdown-item" asp-controller="Posts" asp-action="Drafts">
+                                <i class="bi bi-file-earmark me-2"></i>Rascunhos
+                            </a>
+                            <a class="dropdown-item" asp-controller="Posts" asp-action="Published">
+                                <i class="bi bi-check-circle me-2"></i>Publicados
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">
+                                <i class="bi bi-file-text me-2"></i>Outros Conteúdos
                             </h6>
                             <a class="dropdown-item" asp-controller="Textos" asp-action="Criar">
                                 <i class="bi bi-plus-circle me-2"></i>Submeter Texto
@@ -121,7 +171,7 @@
                                 <i class="bi bi-file-earmark-text me-2"></i>Meus Textos
                             </a>
                             <a class="dropdown-item" asp-controller="Textos" asp-action="Rascunhos">
-                                <i class="bi bi-file-earmark me-2"></i>Rascunhos
+                                <i class="bi bi-file-earmark me-2"></i>Rascunhos Textos
                             </a>
                             <div class="dropdown-divider"></div>
                             <h6 class="dropdown-header">
@@ -208,14 +258,14 @@
                 </h5>
                 <p class="text-muted">
                     <em>"Fale com a minha mão"</em><br>
-                    Um blog onde qualquer pessoa pode se registrar e submeter textos para aprovação e publicação.
+                    Um blog onde qualquer pessoa pode se registrar e submeter posts para aprovação e publicação.
                 </p>
             </div>
             <div class="col-md-3">
                 <h6>Links Rápidos</h6>
                 <ul class="list-unstyled">
                     <li><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Início</a></li>
-                    <li><a asp-controller="Textos" asp-action="Index" class="text-decoration-none">Textos Recentes</a></li>
+                    <li><a asp-controller="Posts" asp-action="Index" class="text-decoration-none">Posts Recentes</a></li>
                     <li><a href="#" class="text-decoration-none">Como Submeter</a></li>
                     <li><a asp-controller="Home" asp-action="About" class="text-decoration-none">Sobre</a></li>
                 </ul>

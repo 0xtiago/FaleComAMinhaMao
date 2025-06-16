@@ -1,0 +1,180 @@
+@model FCAMM.Web.ViewModels.Post.ListarPostsViewModel
+
+@{
+    ViewData["Title"] = "Todos os Posts";
+    ViewData["ShowBreadcrumb"] = true;
+    ViewData["BreadcrumbItems"] = new List<dynamic>
+    {
+        new { Text = "Posts", Url = "", IsActive = true }
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="bi bi-file-text me-2"></i>Todos os Posts</h2>
+        <p class="text-muted mb-0">@Model.TotalItens posts publicados</p>
+    </div>
+    @if (User.Identity.IsAuthenticated && (User.IsInRole("Admin") || User.IsInRole("Moderador") || User.IsInRole("Autor")))
+    {
+        <a asp-controller="Posts" asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Criar Post
+        </a>
+    }
+</div>
+
+<!-- Filtros simples -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <!-- Busca -->
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="busca" value="@Model.Busca" 
+                           placeholder="Buscar posts...">
+                </div>
+
+                <!-- Categoria -->
+                <div class="col-md-3">
+                    <select class="form-select" name="categoria">
+                        <option value="">Todas as categorias</option>
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.Id" selected="@(Model.CategoriaFiltro == categoria.Id)">
+                                @categoria.Nome
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Ordenação -->
+                <div class="col-md-3">
+                    <select class="form-select" name="ordenacao">
+                        <option value="data-desc" selected="@(Model.OrdenacaoFiltro == "data-desc")">Mais recentes</option>
+                        <option value="data-asc" selected="@(Model.OrdenacaoFiltro == "data-asc")">Mais antigos</option>
+                        <option value="titulo-asc" selected="@(Model.OrdenacaoFiltro == "titulo-asc")">Título A-Z</option>
+                    </select>
+                </div>
+
+                <!-- Botão -->
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Posts -->
+@if (Model.Posts.Any())
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Título</th>
+                            <th>Autor</th>
+                            <th>Categoria</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var post in Model.Posts)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" 
+                                       class="text-decoration-none fw-bold">
+                                        @post.Titulo
+                                    </a>
+                                    @if (!string.IsNullOrEmpty(post.Resumo))
+                                    {
+                                        <br><small class="text-muted">@post.Resumo.Substring(0, Math.Min(100, post.Resumo.Length))@(post.Resumo.Length > 100 ? "..." : "")</small>
+                                    }
+                                </td>
+                                <td>
+                                    <i class="bi bi-person-circle me-1"></i>@post.Autor.Nome
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@post.Categoria.Nome</span>
+                                </td>
+                                <td>
+                                    <small>@post.DataAprovacao?.ToString("dd/MM/yyyy")</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    @if (Model.TotalPaginas > 1)
+    {
+        <nav aria-label="Navegação de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @if (Model.PaginaAtual > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" 
+                           asp-route-busca="@Model.Busca"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@(Model.PaginaAtual - 1)">
+                            Anterior
+                        </a>
+                    </li>
+                }
+
+                @for (int i = Math.Max(1, Model.PaginaAtual - 2); i <= Math.Min(Model.TotalPaginas, Model.PaginaAtual + 2); i++)
+                {
+                    <li class="page-item @(i == Model.PaginaAtual ? "active" : "")">
+                        <a class="page-link" asp-action="Index" 
+                           asp-route-busca="@Model.Busca"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@i">
+                            @i
+                        </a>
+                    </li>
+                }
+
+                @if (Model.PaginaAtual < Model.TotalPaginas)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-action="Index" 
+                           asp-route-busca="@Model.Busca"
+                           asp-route-categoria="@Model.CategoriaFiltro"
+                           asp-route-ordenacao="@Model.OrdenacaoFiltro"
+                           asp-route-pagina="@(Model.PaginaAtual + 1)">
+                            Próxima
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-file-text text-muted" style="font-size: 4rem;"></i>
+            <h4 class="mt-3 text-muted">Nenhum post encontrado</h4>
+            <p class="text-muted">
+                @if (string.IsNullOrEmpty(Model.Busca) && !Model.CategoriaFiltro.HasValue)
+                {
+                    <text>Ainda não há posts publicados.</text>
+                }
+                else
+                {
+                    <text>Tente ajustar os filtros ou fazer uma nova busca.</text>
+                }
+            </p>
+        </div>
+    </div>
+}

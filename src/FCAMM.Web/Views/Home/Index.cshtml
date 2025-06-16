@@ -1,8 +1,141 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model FCAMM.Web.ViewModels.Home.HomeViewModel
+
+@{
+    ViewData["Title"] = "FCAMM - Fale com a minha mão";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Section -->
+<div class="hero-section bg-primary text-white rounded-4 p-4 mb-4">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="display-5 mb-3">
+                <i class="fas fa-hand-paper me-3"></i>
+                Fale com a minha mão
+            </h1>
+            <p class="lead mb-3">
+                Uma plataforma onde qualquer pessoa pode compartilhar suas ideias e conhecimentos 
+                através de posts moderados pela comunidade.
+            </p>
+            @if (!User.Identity.IsAuthenticated)
+            {
+                <div class="d-flex gap-2">
+                    <a asp-controller="Conta" asp-action="Registrar" class="btn btn-light">
+                        <i class="bi bi-person-plus me-1"></i>Registrar-se
+                    </a>
+                    <a asp-controller="Conta" asp-action="Login" class="btn btn-outline-light">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Entrar
+                    </a>
+                </div>
+            }
+            else
+            {
+                <a asp-controller="Posts" asp-action="Create" class="btn btn-light">
+                    <i class="bi bi-plus-circle me-1"></i>Criar novo post
+                </a>
+            }
+        </div>
+        <div class="col-lg-4 text-center">
+            <i class="fas fa-hand-paper" style="font-size: 6rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Conteúdo Principal -->
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-newspaper me-2"></i>Posts Recentes</h2>
+            <a asp-controller="Posts" asp-action="Index" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-right me-1"></i>Ver todos os posts
+            </a>
+        </div>
+
+        @if (Model.PostsRecentes.Any())
+        {
+            @foreach (var post in Model.PostsRecentes)
+            {
+                <article class="card mb-3">
+                    <div class="card-body">
+                        <h3 class="card-title h5">
+                            <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" 
+                               class="text-decoration-none">
+                                @post.Titulo
+                            </a>
+                        </h3>
+                        
+                        @if (!string.IsNullOrEmpty(post.Resumo))
+                        {
+                            <p class="card-text text-muted mb-2">@post.Resumo</p>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-3 text-muted small">
+                                <span>
+                                    <i class="bi bi-calendar me-1"></i>@post.DataAprovacao?.ToString("dd/MM/yyyy")
+                                </span>
+                                <span class="badge bg-info">@post.Categoria.Nome</span>
+                            </div>
+                            <a asp-controller="Home" asp-action="Post" asp-route-slug="@post.Slug" 
+                               class="btn btn-sm btn-outline-primary">
+                                Ler mais
+                            </a>
+                        </div>
+                    </div>
+                </article>
+            }
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-file-earmark-text text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 text-muted">Nenhum post publicado ainda</h4>
+                    <p class="text-muted">Seja o primeiro a compartilhar sua história!</p>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a asp-controller="Posts" asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i>Criar primeiro post
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Conta" asp-action="Registrar" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-1"></i>Registrar para postar
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Categorias -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-tags me-2"></i>Categorias
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Categorias.Any())
+                {
+                    @foreach (var categoria in Model.Categorias)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <a asp-controller="Home" asp-action="Categoria" asp-route-slug="@categoria.Slug" 
+                               class="text-decoration-none">
+                                @categoria.Nome
+                            </a>
+                            <span class="badge bg-secondary">@categoria.PostsCount</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted text-center">Nenhuma categoria ainda</p>
+                }
+            </div>
+        </div>
+    </div>
 </div>
